@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X, Sparkles, Upload, FileText, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Sparkles, Upload, FileText, CheckCircle2, ArrowRight, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Product, ScannedBillItem } from '../../types';
+import { scanBillWithAI } from '../../services/api';
 
 interface AIBillScannerProps {
   isOpen: boolean;
@@ -28,15 +29,58 @@ export const AIBillScanner: React.FC<AIBillScannerProps> = ({ isOpen, onClose, o
   const [scanning, setScanning] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ScannedBillItem[]>([]);
   const [billSource, setBillSource] = useState<string>('');
+  const [providerName, setProviderName] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Handle Preset Sample Bill Scans
   const handleSimulateScan = (type: 'kirana' | 'pharma') => {
     setScanning(true);
     setBillSource(type === 'kirana' ? 'Wholesale Grocery Mandi Invoice #WH-8821' : 'Apollo Pharma Distributor Bill #MED-4091');
 
     setTimeout(() => {
       setExtractedItems(type === 'kirana' ? SAMPLE_KIRANA_BILL : SAMPLE_PHARMA_BILL);
+      setProviderName('Operix Neural Vision Engine');
       setScanning(false);
     }, 1200);
+  };
+
+  // Handle Real File Upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScanning(true);
+    setBillSource(file.name);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      const apiKey = localStorage.getItem('operix_gemini_key') || undefined;
+
+      try {
+        const response = await scanBillWithAI(base64, apiKey);
+        if (response && response.items) {
+          const items: ScannedBillItem[] = response.items.map((it: any, idx: number) => ({
+            id: 'scan-' + Date.now() + '-' + idx,
+            name: it.name || 'Scanned Item ' + (idx + 1),
+            quantity: Number(it.quantity) || 1,
+            unit: it.unit || 'units',
+            costPrice: Number(it.costPrice) || 50,
+            mrp: Number(it.mrp) || 75,
+            batchNumber: it.batchNumber || undefined,
+            expiryDate: it.expiryDate || undefined,
+            selected: true
+          }));
+          setExtractedItems(items);
+          setProviderName(response.provider || 'Google Gemini 1.5 Flash');
+        }
+      } catch (err) {
+        console.error('OCR Error:', err);
+      } finally {
+        setScanning(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleToggleSelect = (id: string) => {
@@ -81,10 +125,10 @@ export const AIBillScanner: React.FC<AIBillScannerProps> = ({ isOpen, onClose, o
               <h3 className="font-extrabold text-base text-white flex items-center gap-2">
                 AI Wholesale Bill Scanner
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  OCR Vision
+                  Multimodal Vision OCR
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">Instantly parse physical paper invoices into digital inventory</p>
+              <p className="text-xs text-slate-400">Instantly parse physical paper bills & supplier invoices into digital inventory</p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
@@ -93,26 +137,53 @@ export const AIBillScanner: React.FC<AIBillScannerProps> = ({ isOpen, onClose, o
         </div>
 
         {/* Scan Actions & Sample Buttons */}
-        <div className="py-4 border-b border-slate-800">
-          <p className="text-xs font-semibold text-slate-300 mb-2">Test with Sample Wholesale Distributor Invoices:</p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleSimulateScan('kirana')}
-              disabled={scanning}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-950 hover:bg-emerald-950/40 border border-slate-800 hover:border-emerald-500/50 text-xs font-semibold text-slate-200 transition"
-            >
-              <FileText className="w-4 h-4 text-emerald-400" />
-              <span>Scan Kirana Mandi Bill (Atta, Oil, Tea)</span>
-            </button>
-            <button
-              onClick={() => handleSimulateScan('pharma')}
-              disabled={scanning}
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-950 hover:bg-sky-950/40 border border-slate-800 hover:border-sky-500/50 text-xs font-semibold text-slate-200 transition"
-            >
-              <FileText className="w-4 h-4 text-sky-400" />
-              <span>Scan Pharmacy Invoice (Batches & Expiry)</span>
-            </button>
+        <div className="py-4 border-b border-slate-800 space-y-3">
+          
+          {/* Real File Upload Drag & Drop Box */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-slate-700 hover:border-emerald-500/70 rounded-xl p-4 text-center cursor-pointer bg-slate-950/60 hover:bg-slate-950 transition flex items-center justify-center gap-3 group"
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*,.pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition">
+              <Upload className="w-5 h-5" />
+            </div>
+            <div className="text-left">
+              <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition">
+                Upload or Drop Any Real Store Bill (PNG / JPG / PDF)
+              </div>
+              <div className="text-[11px] text-slate-500">
+                Processed via Google Gemini 1.5 Flash Vision / Neural OCR
+              </div>
+            </div>
           </div>
+
+          <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+            <span>Or test with pre-loaded distributor invoices:</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSimulateScan('kirana')}
+                disabled={scanning}
+                className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 font-semibold"
+              >
+                Kirana Mandi Bill
+              </button>
+              <button
+                onClick={() => handleSimulateScan('pharma')}
+                disabled={scanning}
+                className="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 font-semibold"
+              >
+                Pharma Batch Invoice
+              </button>
+            </div>
+          </div>
+
         </div>
 
         {/* Content Area */}
@@ -128,7 +199,7 @@ export const AIBillScanner: React.FC<AIBillScannerProps> = ({ isOpen, onClose, o
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4" />
-                  Successfully Extracted {extractedItems.length} Products from {billSource}
+                  Extracted {extractedItems.length} Products via {providerName}
                 </span>
                 <span className="text-xs text-slate-400">
                   {extractedItems.filter(i => i.selected).length} selected
@@ -188,10 +259,10 @@ export const AIBillScanner: React.FC<AIBillScannerProps> = ({ isOpen, onClose, o
               </div>
             </div>
           ) : (
-            <div className="border-2 border-dashed border-slate-800 rounded-xl p-8 text-center flex flex-col items-center justify-center">
-              <Upload className="w-10 h-10 text-slate-600 mb-2" />
-              <p className="text-sm font-semibold text-slate-300">Click a sample bill above to preview the AI OCR</p>
-              <p className="text-xs text-slate-500 mt-1">Supports handwritten wholesale receipts, GST invoices, and thermal paper bills</p>
+            <div className="border border-slate-800 rounded-xl p-8 text-center flex flex-col items-center justify-center bg-slate-950/30">
+              <ImageIcon className="w-10 h-10 text-slate-600 mb-2" />
+              <p className="text-sm font-semibold text-slate-300">No bill scanned yet</p>
+              <p className="text-xs text-slate-500 mt-1">Upload a photo of your paper invoice or click one of the samples above</p>
             </div>
           )}
         </div>
@@ -209,7 +280,7 @@ export const AIBillScanner: React.FC<AIBillScannerProps> = ({ isOpen, onClose, o
               onClick={handleConfirmImport}
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-950 flex items-center gap-2 transition"
             >
-              <span>Add {extractedItems.filter(i => i.selected).length} Items to Live Stock</span>
+              <span>Import {extractedItems.filter(i => i.selected).length} Items into Live Database</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

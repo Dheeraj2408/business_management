@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { AuthModal } from './components/AuthModal';
+import { SettingsModal } from './components/SettingsModal';
 import { AIBillScanner } from './features/ai/AIBillScanner';
 import { AIExpiryForecaster } from './features/ai/AIExpiryForecaster';
 import { AIGreenAdvisor } from './features/ai/AIGreenAdvisor';
@@ -19,8 +20,18 @@ import {
   INITIAL_RETAILERS,
   INITIAL_BRANCHES
 } from './data/mockData';
-import { BusinessTier, User, Product, CustomerLoyalty as CustomerType, SustainabilityMetric } from './types';
-import { Sparkles, Shield, Store, Building2, Factory } from 'lucide-react';
+import {
+  fetchProducts,
+  createProduct,
+  updateProduct as apiUpdateProduct,
+  deleteProduct as apiDeleteProduct,
+  processCheckout,
+  updateSustainability as apiUpdateSustainability,
+  transferBranchStock as apiTransferBranchStock
+} from './services/api';
+
+import { BusinessTier, User, Product, CustomerLoyalty as CustomerType, SustainabilityMetric, Branch } from './types';
+import { Sparkles, Store, Building2, Factory, Database } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Global State
@@ -36,11 +47,21 @@ export const App: React.FC = () => {
   const [customers, setCustomers] = useState<CustomerType[]>(INITIAL_CUSTOMERS);
   const [sustainability, setSustainability] = useState<SustainabilityMetric>(INITIAL_SUSTAINABILITY);
   const [retailers] = useState(INITIAL_RETAILERS);
-  const [branches] = useState(INITIAL_BRANCHES);
+  const [branches, setBranches] = useState<Branch[]>(INITIAL_BRANCHES);
 
   // Modals
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Fetch initial products from backend SQLite
+  useEffect(() => {
+    fetchProducts().then(data => {
+      if (data && data.length > 0) {
+        setProducts(data);
+      }
+    });
+  }, []);
 
   // Switch tier handler
   const handleSwitchTier = (tier: BusinessTier) => {
@@ -57,49 +78,68 @@ export const App: React.FC = () => {
   };
 
   // Stock Quantity Updater
-  const handleUpdateQuantity = (id: string, delta: number) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === id) {
-        return { ...p, quantity: Math.max(0, p.quantity + delta) };
-      }
-      return p;
-    }));
+  const handleUpdateQuantity = async (id: string, delta: number) => {
+    const prod = products.find(p => p.id === id);
+    if (!prod) return;
+
+    const newQty = Math.max(0, prod.quantity + delta);
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, quantity: newQty } : p));
+    await apiUpdateProduct(id, { quantity: newQty });
   };
 
-  // Add Product from Manual Modal
-  const handleAddProduct = (newProd: Product) => {
-    setProducts(prev => [newProd, ...prev]);
+  // Add Product (Manual or Voice)
+  const handleAddProduct = async (newProdData: Partial<Product>) => {
+    const created = await createProduct(newProdData);
+    setProducts(prev => [created, ...prev]);
+  };
+
+  // Delete Product
+  const handleDeleteProduct = async (id: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
+    await apiDeleteProduct(id);
   };
 
   // Import products from AI Bill Scanner
-  const handleImportScannedProducts = (newItems: Product[]) => {
+  const handleImportScannedProducts = async (newItems: Product[]) => {
     setProducts(prev => [...newItems, ...prev]);
+    for (const item of newItems) {
+      await createProduct(item);
+    }
   };
 
   // Expiry Forecaster: Apply Flash Clearance Discount
-  const handleApplyDiscount = (productId: string, discountPct: number) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === productId) {
-        const discountedPrice = Math.round(p.price * (1 - discountPct / 100));
-        return { ...p, price: discountedPrice };
-      }
-      return p;
-    }));
+  const handleApplyDiscount = async (productId: string, discountPct: number) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+
+    const discountedPrice = Math.round(prod.price * (1 - discountPct / 100));
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, price: discountedPrice } : p));
+    await apiUpdateProduct(productId, { price: discountedPrice });
   };
 
   // Safe Medical Waste Disposal Log
-  const handleLogDisposal = (productId: string) => {
+  const handleLogDisposal = async (productId: string) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
+    await apiDeleteProduct(productId);
+
     // Reward sustainability points
-    setSustainability(prev => ({
-      ...prev,
-      wasteDiversionPct: Math.min(100, prev.wasteDiversionPct + 2),
-      overallScore: Math.min(100, prev.overallScore + 1)
-    }));
+    const newMetrics = {
+      ...sustainability,
+      wasteDiversionPct: Math.min(100, sustainability.wasteDiversionPct + 2),
+      overallScore: Math.min(100, sustainability.overallScore + 1)
+    };
+    setSustainability(newMetrics);
+    await apiUpdateSustainability(newMetrics);
   };
 
-  // Complete Customer Phone Checkout
-  const handleCompleteCheckout = (phone: string, broughtBag: boolean, total: number) => {
+  // Complete Customer Phone Checkout (POS + Loyalty)
+  const handleCompleteCheckout = async (
+    phone: string,
+    broughtBag: boolean,
+    cartItems: { id: string; quantity: number }[],
+    total: number
+  ) => {
+    // Optimistic UI updates
     setCustomers(prev => prev.map(c => {
       if (c.phone === phone) {
         return {
@@ -112,18 +152,50 @@ export const App: React.FC = () => {
       }
       return c;
     }));
+
+    // Deduct stock quantities
+    setProducts(prev => prev.map(p => {
+      const inCart = cartItems.find(c => c.id === p.id);
+      if (inCart) {
+        const newQty = Math.max(0, p.quantity - inCart.quantity);
+        apiUpdateProduct(p.id, { quantity: newQty });
+        return { ...p, quantity: newQty };
+      }
+      return p;
+    }));
+
+    // Call backend API
+    await processCheckout({ phone, broughtBag, items: cartItems, total });
   };
 
   // AI Green Advisor: Apply recommendations
-  const handleApplyOptimization = () => {
-    setSustainability(prev => ({
-      ...prev,
-      renewableEnergyPct: Math.min(100, prev.renewableEnergyPct + 12),
-      recyclablePackagingPct: Math.min(100, prev.recyclablePackagingPct + 10),
-      wasteDiversionPct: Math.min(100, prev.wasteDiversionPct + 5),
-      overallScore: Math.min(100, prev.overallScore + 10),
-      carbonSavedTons: prev.carbonSavedTons + 34
+  const handleApplyOptimization = async () => {
+    const newMetrics = {
+      ...sustainability,
+      renewableEnergyPct: Math.min(100, sustainability.renewableEnergyPct + 12),
+      recyclablePackagingPct: Math.min(100, sustainability.recyclablePackagingPct + 10),
+      wasteDiversionPct: Math.min(100, sustainability.wasteDiversionPct + 5),
+      overallScore: Math.min(100, sustainability.overallScore + 10),
+      carbonSavedTons: sustainability.carbonSavedTons + 34
+    };
+    setSustainability(newMetrics);
+    await apiUpdateSustainability(newMetrics);
+  };
+
+  // Inter-branch stock transfer
+  const handleTransferStock = async (
+    sourceBranchId: string,
+    targetBranchId: string,
+    quantity: number,
+    productName: string
+  ) => {
+    setBranches(prev => prev.map(b => {
+      if (b.id === sourceBranchId) return { ...b, totalSKUs: Math.max(0, b.totalSKUs - quantity) };
+      if (b.id === targetBranchId) return { ...b, totalSKUs: b.totalSKUs + quantity };
+      return b;
     }));
+
+    await apiTransferBranchStock({ sourceBranchId, targetBranchId, quantity, productName });
   };
 
   return (
@@ -135,6 +207,7 @@ export const App: React.FC = () => {
         onSwitchTier={handleSwitchTier}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenScanner={() => setIsScannerOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Main Body */}
@@ -185,11 +258,12 @@ export const App: React.FC = () => {
             {/* Sales & Demand Stats */}
             <SalesStats products={products} />
 
-            {/* Stock Management Table */}
+            {/* Stock Management Table (with Voice & CSV) */}
             <StockManagement
               products={products}
               onUpdateQuantity={handleUpdateQuantity}
               onAddProduct={handleAddProduct}
+              onDeleteProduct={handleDeleteProduct}
               onOpenScanner={() => setIsScannerOpen(true)}
             />
           </div>
@@ -213,10 +287,11 @@ export const App: React.FC = () => {
               onLogDisposal={handleLogDisposal}
             />
 
-            {/* Customer Phone Loyalty & Green Stamp POS */}
+            {/* Customer Phone Loyalty & Dynamic UPI QR POS */}
             <CustomerLoyalty
               customers={customers}
               products={products}
+              storeName={user.storeName}
               onCompleteCheckout={handleCompleteCheckout}
             />
 
@@ -225,6 +300,7 @@ export const App: React.FC = () => {
               products={products}
               onUpdateQuantity={handleUpdateQuantity}
               onAddProduct={handleAddProduct}
+              onDeleteProduct={handleDeleteProduct}
               onOpenScanner={() => setIsScannerOpen(true)}
             />
 
@@ -248,14 +324,21 @@ export const App: React.FC = () => {
             {/* Algorithmic ESG Sustainability Score Dials */}
             <SustainabilityScore
               metrics={sustainability}
-              onUpdateMetrics={setSustainability}
+              onUpdateMetrics={async (newMetrics) => {
+                setSustainability(newMetrics);
+                await apiUpdateSustainability(newMetrics);
+              }}
             />
 
-            {/* Downstream Retailer Directory */}
+            {/* Downstream Retailer Directory with B2B Invoices */}
             <RetailerNetwork retailers={retailers} />
 
-            {/* Multi-Branch Management */}
-            <BranchManagement branches={branches} />
+            {/* Multi-Branch Management with Live Stock Transfers */}
+            <BranchManagement
+              branches={branches}
+              products={products}
+              onTransferStock={handleTransferStock}
+            />
 
             {/* Expiry / Batch & Stock Oversight */}
             <ExpiryTracker
@@ -267,6 +350,7 @@ export const App: React.FC = () => {
               products={products}
               onUpdateQuantity={handleUpdateQuantity}
               onAddProduct={handleAddProduct}
+              onDeleteProduct={handleDeleteProduct}
               onOpenScanner={() => setIsScannerOpen(true)}
             />
           </div>
@@ -279,6 +363,14 @@ export const App: React.FC = () => {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLogin={setUser}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSaved={() => {
+          fetchProducts().then(data => data && setProducts(data));
+        }}
       />
 
       <AIBillScanner
@@ -294,7 +386,7 @@ export const App: React.FC = () => {
           <span className="font-semibold text-slate-400">
             Built by <strong className="text-white">team dev</strong> (Dheeraj, Mahesh, Jeshwanth, Revan)
           </span>
-          <span className="text-emerald-400 font-medium">Operix — Live Demo</span>
+          <span className="text-emerald-400 font-medium">Operix Full-Stack — Live Demo</span>
         </div>
       </footer>
 

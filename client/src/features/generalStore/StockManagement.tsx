@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Search, Plus, Sparkles, AlertCircle, ArrowUpDown, Package, Trash2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Search, Plus, Sparkles, AlertCircle, Package, Trash2, Download, Upload, FileSpreadsheet } from 'lucide-react';
 import { Product } from '../../types';
+import { VoiceInput } from '../ai/VoiceInput';
 
 interface StockManagementProps {
   products: Product[];
   onUpdateQuantity: (id: string, delta: number) => void;
-  onAddProduct: (product: Product) => void;
+  onAddProduct: (product: Partial<Product>) => void;
+  onDeleteProduct?: (id: string) => void;
   onOpenScanner: () => void;
 }
 
@@ -13,11 +15,13 @@ export const StockManagement: React.FC<StockManagementProps> = ({
   products,
   onUpdateQuantity,
   onAddProduct,
+  onDeleteProduct,
   onOpenScanner
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [showAddModal, setShowAddModal] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   // New product form state
   const [newName, setNewName] = useState('');
@@ -40,8 +44,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
     e.preventDefault();
     if (!newName) return;
 
-    const newProd: Product = {
-      id: 'prod-' + Date.now(),
+    onAddProduct({
       name: newName,
       category: newCategory,
       quantity: Number(newQty),
@@ -49,12 +52,58 @@ export const StockManagement: React.FC<StockManagementProps> = ({
       price: Number(newPrice),
       costPrice: Number(newCost),
       minThreshold: 10,
-      supplierName: 'Local Distributor'
-    };
+      supplierName: 'Direct Ingest'
+    });
 
-    onAddProduct(newProd);
     setNewName('');
     setShowAddModal(false);
+  };
+
+  // CSV Export
+  const handleExportCSV = () => {
+    const headers = 'ID,Name,Category,Quantity,Unit,CostPrice,SellingPrice,Batch,Expiry\n';
+    const rows = products.map(p => 
+      `"${p.id}","${p.name}","${p.category}",${p.quantity},"${p.unit}",${p.costPrice},${p.price},"${p.batchNumber || ''}","${p.expiryDate || ''}"`
+    ).join('\n');
+
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `operix_inventory_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // CSV Import
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+      if (lines.length <= 1) return;
+
+      // Skip header, parse lines
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
+        if (parts.length >= 2 && parts[1]) {
+          onAddProduct({
+            name: parts[1],
+            category: parts[2] || 'Imported SKU',
+            quantity: Number(parts[3]) || 10,
+            unit: parts[4] || 'units',
+            costPrice: Number(parts[5]) || 50,
+            price: Number(parts[6]) || 70,
+            batchNumber: parts[7] || undefined,
+            expiryDate: parts[8] || undefined
+          });
+        }
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -65,19 +114,48 @@ export const StockManagement: React.FC<StockManagementProps> = ({
         <div>
           <h3 className="font-extrabold text-base text-white flex items-center gap-2">
             <Package className="w-5 h-5 text-emerald-400" />
-            Inventory & Stock Catalog
+            Inventory & Stock Catalog (Live Database)
           </h3>
           <p className="text-xs text-slate-400">Manage store catalog, track low-stock thresholds, and update supplies</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* CSV Export & Import */}
+          <button
+            onClick={handleExportCSV}
+            title="Download full inventory as CSV"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-semibold transition"
+          >
+            <Download className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+
+          <button
+            onClick={() => csvInputRef.current?.click()}
+            title="Upload CSV to add products"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-semibold transition"
+          >
+            <Upload className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Import CSV</span>
+          </button>
+          <input
+            type="file"
+            ref={csvInputRef}
+            accept=".csv"
+            onChange={handleImportCSV}
+            className="hidden"
+          />
+
+          {/* Voice Input Microphone */}
+          <VoiceInput onProductDetected={onAddProduct} />
+
           {/* AI Bill Scanner CTA */}
           <button
             onClick={onOpenScanner}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs shadow-md transition"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Scan Distributor Bill (AI)</span>
+            <span>Scan Bill (AI)</span>
           </button>
 
           {/* Add Item Button */}
@@ -131,7 +209,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
               <th className="p-3">Stock Level</th>
               <th className="p-3">Cost / Sell Price</th>
               <th className="p-3">Status</th>
-              <th className="p-3 text-right">Quick Stock Update</th>
+              <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
@@ -165,20 +243,32 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                     )}
                   </td>
                   <td className="p-3 text-right">
-                    <div className="inline-flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
-                      <button
-                        onClick={() => onUpdateQuantity(p.id, -1)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center font-bold text-white text-xs">{p.quantity}</span>
-                      <button
-                        onClick={() => onUpdateQuantity(p.id, 1)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition"
-                      >
-                        +
-                      </button>
+                    <div className="inline-flex items-center gap-1.5">
+                      <div className="inline-flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                        <button
+                          onClick={() => onUpdateQuantity(p.id, -1)}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition"
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center font-bold text-white text-xs">{p.quantity}</span>
+                        <button
+                          onClick={() => onUpdateQuantity(p.id, 1)}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold transition"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {onDeleteProduct && (
+                        <button
+                          onClick={() => onDeleteProduct(p.id)}
+                          title="Delete SKU"
+                          className="p-1.5 rounded-lg bg-slate-950 hover:bg-rose-950/50 text-slate-500 hover:text-rose-400 border border-slate-800 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -274,7 +364,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs"
                 >
-                  Save Product
+                  Save to Database
                 </button>
               </div>
             </form>

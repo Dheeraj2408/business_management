@@ -1,15 +1,33 @@
-import React from 'react';
-import { Leaf, Store, Building2, Factory, LogOut, Sparkles, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Leaf, Store, Building2, Factory, LogOut, Sparkles, Settings, Database } from 'lucide-react';
 import { BusinessTier, User } from '../types';
+import { isServerOnline } from '../services/api';
 
 interface NavbarProps {
   user: User;
   onSwitchTier: (tier: BusinessTier) => void;
   onOpenAuth: () => void;
   onOpenScanner: () => void;
+  onOpenSettings: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ user, onSwitchTier, onOpenAuth, onOpenScanner }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  user,
+  onSwitchTier,
+  onOpenAuth,
+  onOpenScanner,
+  onOpenSettings
+}) => {
+  const [dbConnected, setDbConnected] = useState<boolean>(true);
+
+  useEffect(() => {
+    isServerOnline().then(setDbConnected);
+    const interval = setInterval(() => {
+      isServerOnline().then(setDbConnected);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   const getTierBadge = () => {
     switch (user.tier) {
       case 'general_store':
@@ -51,8 +69,14 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onSwitchTier, onOpenAuth, 
                 <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   OS v2.0
                 </span>
+                {dbConnected && (
+                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    <Database className="w-2.5 h-2.5" />
+                    Live SQLite
+                  </span>
+                )}
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">Adaptive Commerce & Sustainability Engine</p>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Adaptive Commerce & Sustainability Operating System</p>
             </div>
           </div>
 
@@ -94,11 +118,11 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onSwitchTier, onOpenAuth, 
           </div>
 
           {/* Actions & User Profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {/* AI Bill Scanner Quick Trigger */}
             <button
               onClick={onOpenScanner}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 transition-all transform active:scale-95"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 transition-all transform active:scale-95"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">AI Bill Scanner</span>
@@ -107,8 +131,17 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onSwitchTier, onOpenAuth, 
             {/* Current Active Mode Badge */}
             <div className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold ${badge.color}`}>
               {badge.icon}
-              <span>{user.storeName}</span>
+              <span className="max-w-[120px] truncate">{user.storeName}</span>
             </div>
+
+            {/* Settings Gear (Gemini Key & UPI) */}
+            <button
+              onClick={onOpenSettings}
+              title="System Settings (Gemini API & UPI)"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
 
             {/* Merchant Switch / Login Modal Button */}
             <button
