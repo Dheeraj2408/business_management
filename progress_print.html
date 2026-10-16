@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EcoTrade OS — Progress Dossier</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 18mm 16mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      line-height: 1.55;
+      font-size: 13.5px;
+      background: #ffffff;
+      padding: 0;
+    }
+    .header {
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #0f766e;
+      background: #f0fdfa;
+      border: 1px solid #ccfbf1;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+    }
+    .meta-item .label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .meta-item .value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-top: 2px;
+    }
+    .section {
+      margin-bottom: 18px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .hmw-box {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+    }
+    .hmw-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #15803d;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .hmw-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #14532d;
+      line-height: 1.45;
+      font-style: italic;
+    }
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .card-heading {
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    .card-body {
+      color: #475569;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    .footer {
+      margin-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <span class="badge">ALTHON 2.0 • 24-Hour Hackathon</span>
+      <h1>Project Progress Log</h1>
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 12px; font-weight: 700; color: #0f172a;">team dev</div>
+      <div style="font-size: 11px; color: #64748b;">Live Working Document</div>
+    </div>
+  </div>
+
+  <!-- Team Metadata Box -->
+  <div class="meta-grid">
+    <div class="meta-item">
+      <div class="label">Team Name</div>
+      <div class="value">team dev</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Team Members</div>
+      <div class="value">Dheeraj, Mahesh, Jeshwanth, Revan</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Project Title</div>
+      <div class="value">EcoTrade OS</div>
+    </div>
+  </div>
+
+  <!-- How Might We (Problem Statement) -->
+  <div class="hmw-box">
+    <div class="hmw-label">Problem Statement (How Might We)</div>
+    <div class="hmw-text">
+      "How might we help local shopkeepers effortlessly manage their inventory and build customer loyalty, while motivating businesses to adopt and source from sustainable, eco-friendly suppliers?"
+    </div>
+  </div>
+
+  <!-- Proposed Solution -->
+  <div class="section">
+    <div class="section-title">Proposed Solution</div>
+    <div class="card-list">
+      <div class="card">
+        <div class="card-heading">1. Adaptive Store Setup</div>
+        <div class="card-body">A flexible workspace that scales to the shop's operational needs—giving Kirana stores and pharmacies simple daily inventory and billing tools, while offering suppliers a clear format to document their sustainability practices.</div>
+      </div>
+      <div class="card">
+        <div class="card-heading">2. Low-Friction Daily Management</div>
+        <div class="card-body">Eliminates tedious manual typing through quick voice-based stock logging, and introduces a simple phone-number visit tracker so merchants can reward repeat shoppers without expensive POS hardware.</div>
+      </div>
+      <div class="card">
+        <div class="card-heading">3. Circular Green Incentives</div>
+        <div class="card-body">Directly rewards shoppers who bring reusable bags with instant checkout discounts, and enables shopkeepers to easily discover and stock products from verified eco-conscious suppliers.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Relevance -->
+  <div class="section">
+    <div class="section-title">Relevance & Real-World Impact</div>
+    <div class="card-list">
+      <div class="card">
+        <div class="card-heading">Grassroots Retail Need</div>
+        <div class="card-body">Local Kirana stores and neighbourhood pharmacies run on thin margins and manual registers. They face heavy competition from quick-commerce delivery apps and lack simple tools to track demand and retain loyal repeat customers.</div>
+      </div>
+      <div class="card">
+        <div class="card-heading">Practical Environmental Action</div>
+        <div class="card-body">While customers and store owners care about eco-friendly choices, there is no straightforward mechanism for small businesses to evaluate supplier sustainability, or to reward customers who practice reusable habits.</div>
+      </div>
+      <div class="card">
+        <div class="card-heading">Unified Value</div>
+        <div class="card-body">Bridging everyday shop operations with sustainability incentives makes going green practical and rewarding, rather than an extra compliance burden.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feasibility -->
+  <div class="section">
+    <div class="section-title">Feasibility & Delivery Strategy</div>
+    <div class="card-list">
+      <div class="card">
+        <div class="card-heading">Modular 4-Person Scope</div>
+        <div class="card-body">The system divides cleanly into independent modules that our 4-member team can build in parallel: frontend shop flow, inventory database, customer loyalty logic, and the supplier sustainability rating.</div>
+      </div>
+      <div class="card">
+        <div class="card-heading">Reliable Tech Stack</div>
+        <div class="card-body">Built using responsive React, a lightweight backend API, and browser-native speech recognition for voice input, avoiding heavy or fragile external dependencies.</div>
+      </div>
+      <div class="card">
+        <div class="card-heading">Focused Working Demo</div>
+        <div class="card-body">Our goal is a tight, working core prototype: a shopkeeper logs stock, bills a customer via phone number with an eco-discount, and checks supplier green ratings. Clean, stable, and easy to demonstrate.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>EcoTrade OS • ALTHON 2.0 Hackathon Submission</span>
+    <span>Prepared by team dev</span>
+  </div>
+
+</body>
+</html>
