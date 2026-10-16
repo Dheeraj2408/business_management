@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Leaf, Store, Building2, Factory, LogOut, Sparkles, Settings, Database } from 'lucide-react';
+import { Leaf, Store, Building2, Factory, LogOut, Sparkles, Settings, Database, Flame } from 'lucide-react';
 import { BusinessTier, User } from '../types';
 import { isServerOnline } from '../services/api';
+import { isFirebaseConfigured } from '../services/firebase';
 
 interface NavbarProps {
   user: User;
@@ -19,12 +20,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSettings
 }) => {
   const [dbConnected, setDbConnected] = useState<boolean>(true);
+  const [isFbActive, setIsFbActive] = useState<boolean>(isFirebaseConfigured());
 
   useEffect(() => {
     isServerOnline().then(setDbConnected);
+    setIsFbActive(isFirebaseConfigured());
     const interval = setInterval(() => {
       isServerOnline().then(setDbConnected);
-    }, 10000);
+      setIsFbActive(isFirebaseConfigured());
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -69,12 +73,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   OS v2.0
                 </span>
-                {dbConnected && (
+                {isFbActive ? (
+                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                    <Flame className="w-2.5 h-2.5 text-amber-400" />
+                    Firebase Cloud
+                  </span>
+                ) : dbConnected ? (
                   <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                     <Database className="w-2.5 h-2.5" />
                     Live SQLite
                   </span>
-                )}
+                ) : null}
               </div>
               <p className="text-[11px] text-slate-400 hidden sm:block">Adaptive Commerce & Sustainability Operating System</p>
             </div>

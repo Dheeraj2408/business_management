@@ -52,6 +52,27 @@ import {
   ElectricityData,
   Machine
 } from './types';
+import {
+  listenToProducts,
+  listenToCustomers,
+  listenToSustainability,
+  listenToBranches,
+  listenToEmployees,
+  listenToRawMaterials,
+  listenToElectricity,
+  listenToMachines,
+  syncProductToFirestore,
+  deleteProductFromFirestore,
+  syncCustomerToFirestore,
+  syncSustainabilityToFirestore,
+  syncBranchToFirestore,
+  syncEmployeeToFirestore,
+  deleteEmployeeFromFirestore,
+  syncRawMaterialToFirestore,
+  syncElectricityToFirestore,
+  syncMachineToFirestore
+} from './services/firestoreSync';
+import { isFirebaseConfigured } from './services/firebase';
 import { Sparkles, Store, Building2, Factory, Database } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -81,8 +102,9 @@ export const App: React.FC = () => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Fetch initial data from backend SQLite / API
+  // Fetch initial data from SQLite & attach real-time Cloud Firestore listeners
   useEffect(() => {
+    // 1. Initial load from local backend
     fetchProducts().then(data => {
       if (data && data.length > 0) setProducts(data);
     });
@@ -98,6 +120,54 @@ export const App: React.FC = () => {
     fetchMachines().then(data => {
       if (data && data.length > 0) setMachines(data);
     });
+
+    // 2. Attach live Cloud Firestore subscriptions if configured
+    let unsubProducts: (() => void) | null = null;
+    let unsubCustomers: (() => void) | null = null;
+    let unsubSustainability: (() => void) | null = null;
+    let unsubBranches: (() => void) | null = null;
+    let unsubEmployees: (() => void) | null = null;
+    let unsubRawMaterials: (() => void) | null = null;
+    let unsubElectricity: (() => void) | null = null;
+    let unsubMachines: (() => void) | null = null;
+
+    if (isFirebaseConfigured()) {
+      unsubProducts = listenToProducts((items) => {
+        if (items && items.length > 0) setProducts(items);
+      });
+      unsubCustomers = listenToCustomers((items) => {
+        if (items && items.length > 0) setCustomers(items);
+      });
+      unsubSustainability = listenToSustainability((metrics) => {
+        if (metrics) setSustainability(metrics);
+      });
+      unsubBranches = listenToBranches((items) => {
+        if (items && items.length > 0) setBranches(items);
+      });
+      unsubEmployees = listenToEmployees((items) => {
+        if (items && items.length > 0) setEmployees(items);
+      });
+      unsubRawMaterials = listenToRawMaterials((items) => {
+        if (items && items.length > 0) setRawMaterials(items);
+      });
+      unsubElectricity = listenToElectricity((el) => {
+        if (el) setElectricity(el);
+      });
+      unsubMachines = listenToMachines((items) => {
+        if (items && items.length > 0) setMachines(items);
+      });
+    }
+
+    return () => {
+      unsubProducts?.();
+      unsubCustomers?.();
+      unsubSustainability?.();
+      unsubBranches?.();
+      unsubEmployees?.();
+      unsubRawMaterials?.();
+      unsubElectricity?.();
+      unsubMachines?.();
+    };
   }, []);
 
   // Switch tier handler
@@ -120,20 +190,25 @@ export const App: React.FC = () => {
     if (!prod) return;
 
     const newQty = Math.max(0, prod.quantity + delta);
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, quantity: newQty } : p));
+    const updated = { ...prod, quantity: newQty };
+    setProducts(prev => prev.map(p => p.id === id ? updated : p));
+
     await apiUpdateProduct(id, { quantity: newQty });
+    await syncProductToFirestore(updated);
   };
 
   // Add Product (Manual or Voice)
   const handleAddProduct = async (newProdData: Partial<Product>) => {
     const created = await createProduct(newProdData);
     setProducts(prev => [created, ...prev]);
+    await syncProductToFirestore(created);
   };
 
   // Delete Product
   const handleDeleteProduct = async (id: string) => {
     setProducts(prev => prev.filter(p => p.id !== id));
     await apiDeleteProduct(id);
+    await deleteProductFromFirestore(id);
   };
 
   // Import products from AI Bill Scanner
@@ -141,6 +216,7 @@ export const App: React.FC = () => {
     setProducts(prev => [...newItems, ...prev]);
     for (const item of newItems) {
       await createProduct(item);
+      await syncProductToFirestore(item);
     }
   };
 
@@ -150,14 +226,18 @@ export const App: React.FC = () => {
     if (!prod) return;
 
     const discountedPrice = Math.round(prod.price * (1 - discountPct / 100));
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, price: discountedPrice } : p));
+    const updated = { ...prod, price: discountedPrice };
+    setProducts(prev => prev.map(p => p.id === productId ? updated : p));
+
     await apiUpdateProduct(productId, { price: discountedPrice });
+    await syncProductToFirestore(updated);
   };
 
   // Safe Medical Waste Disposal Log
   const handleLogDisposal = async (productId: string) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
     await apiDeleteProduct(productId);
+    await deleteProductFromFirestore(productId);
 
     // Reward sustainability points
     const newMetrics = {
@@ -167,6 +247,7 @@ export const App: React.FC = () => {
     };
     setSustainability(newMetrics);
     await apiUpdateSustainability(newMetrics);
+    await syncSustainabilityToFirestore(newMetrics);
   };
 
   // Complete Customer Phone Checkout (POS + Loyalty)
@@ -179,13 +260,15 @@ export const App: React.FC = () => {
     // Optimistic UI updates
     setCustomers(prev => prev.map(c => {
       if (c.phone === phone) {
-        return {
+        const updated = {
           ...c,
           visitCount: c.visitCount + 1,
           greenPoints: c.greenPoints + (broughtBag ? 25 : 10),
           reusableBagCount: c.reusableBagCount + (broughtBag ? 1 : 0),
           lastVisit: new Date().toISOString().split('T')[0]
         };
+        syncCustomerToFirestore(updated);
+        return updated;
       }
       return c;
     }));
@@ -195,8 +278,10 @@ export const App: React.FC = () => {
       const inCart = cartItems.find(c => c.id === p.id);
       if (inCart) {
         const newQty = Math.max(0, p.quantity - inCart.quantity);
+        const updatedProd = { ...p, quantity: newQty };
         apiUpdateProduct(p.id, { quantity: newQty });
-        return { ...p, quantity: newQty };
+        syncProductToFirestore(updatedProd);
+        return updatedProd;
       }
       return p;
     }));
@@ -217,6 +302,7 @@ export const App: React.FC = () => {
     };
     setSustainability(newMetrics);
     await apiUpdateSustainability(newMetrics);
+    await syncSustainabilityToFirestore(newMetrics);
   };
 
   // Inter-branch stock transfer
@@ -227,8 +313,16 @@ export const App: React.FC = () => {
     productName: string
   ) => {
     setBranches(prev => prev.map(b => {
-      if (b.id === sourceBranchId) return { ...b, totalSKUs: Math.max(0, b.totalSKUs - quantity) };
-      if (b.id === targetBranchId) return { ...b, totalSKUs: b.totalSKUs + quantity };
+      if (b.id === sourceBranchId) {
+        const updated = { ...b, totalSKUs: Math.max(0, b.totalSKUs - quantity) };
+        syncBranchToFirestore(updated);
+        return updated;
+      }
+      if (b.id === targetBranchId) {
+        const updated = { ...b, totalSKUs: b.totalSKUs + quantity };
+        syncBranchToFirestore(updated);
+        return updated;
+      }
       return b;
     }));
 
@@ -239,23 +333,29 @@ export const App: React.FC = () => {
   const handleAddEmployee = async (newEmp: Partial<Employee>) => {
     const created = await createEmployee(newEmp);
     setEmployees(prev => [created, ...prev]);
+    await syncEmployeeToFirestore(created);
   };
 
   const handleDeleteEmployee = async (id: string) => {
     setEmployees(prev => prev.filter(e => e.id !== id));
     await apiDeleteEmployee(id);
+    await deleteEmployeeFromFirestore(id);
   };
 
   const handleAddRawMaterial = async (newMat: Partial<RawMaterial>) => {
     const created = await createRawMaterial(newMat);
     setRawMaterials(prev => [created, ...prev]);
+    await syncRawMaterialToFirestore(created);
   };
 
   const handleToggleMachine = async (id: string) => {
     setMachines(prev => prev.map(m => {
       if (m.id === id) {
-        const nextStatus = m.status === 'Running' ? 'Maintenance' : m.status === 'Maintenance' ? 'Idle' : 'Running';
-        return { ...m, status: nextStatus };
+        const nextStatus: 'Running' | 'Maintenance' | 'Idle' =
+          m.status === 'Running' ? 'Maintenance' : m.status === 'Maintenance' ? 'Idle' : 'Running';
+        const updated: Machine = { ...m, status: nextStatus };
+        syncMachineToFirestore(updated);
+        return updated;
       }
       return m;
     }));
@@ -263,7 +363,12 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateElectricity = async (updates: Partial<ElectricityData>) => {
-    setElectricity(prev => prev ? { ...prev, ...updates } : null);
+    setElectricity(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updates };
+      syncElectricityToFirestore(updated);
+      return updated;
+    });
     await apiUpdateElectricity(updates);
   };
 
