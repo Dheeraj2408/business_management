@@ -35,25 +35,30 @@ We are developing **Operix**, an adaptive platform that connects everyday store 
 
 ---
 
-### ⚡ Implemented Core Features (Working Prototype)
+### ⚡ Implemented Core Features (Full-Stack Working System)
 
-1. **Merchant Authentication (Phone / Email) & 3-Tier Chameleon UI:**
-   - One-click account switching between **General Store**, **Clinic/Mall**, and **Industry**.
+1. **Live SQLite Database & Backend REST API (`/server`):**
+   - Running live on `http://localhost:5000/api`.
+   - Complete ACID persistence for products, customers, transactions, branches, and sustainability audits with automatic LocalStorage sync fallback.
 
-2. **Tier 1: General Stores (Kirana & Micro-Retail):**
-   - Real-time inventory table with low-stock warnings and quick quantity updates (+ / -).
-   - Sales demand analytics with weekly revenue velocity bar charts.
+2. **Real AI Suite & Google Gemini Vision Integration:**
+   - 📸 **Multimodal AI Bill Scanner:** Allows uploading any physical bill image (PNG/JPG/PDF) or pre-seeded distributor invoices, processing line items via Google Gemini 1.5 Flash Vision API into live stock.
+   - 🎙️ **Microphone Voice-to-Stock (Web Speech API):** Click the mic icon and speak naturally (*"Add 15 kg basmati rice for 350 rupees"*) — parsed and added directly to the database.
+   - ⚠️ **AI Shelf-Life Risk Forecaster:** Detects perishables approaching expiry and applies 20% flash clearance discounts.
+   - 🌿 **AI Green Advisor:** Algorithmic recommendations to raise ESG scores with one-click optimization simulation (+10 pts).
 
-3. **Tier 2: Malls, Wholesales & Clinics:**
-   - **Batch & Expiry Date Radar:** Color-coded urgency alerts (`Critical <15d`, `Warning <45d`, `Safe`) and medical bio-waste disposal logging.
-   - **Customer Phone Loyalty Portal:** 10-digit mobile check-in, visit count milestone discounts (10% on 5th visit), and "Brought Reusable Cloth Bag" Green Stamp discount.
+3. **Tier 1: General Stores (Kirana & Micro-Retail):**
+   - Live inventory management with search, category filtering, low-stock warnings, and inline quantity adjustments (+ / -).
+   - **CSV Export & Import:** Download full store catalog to `.csv` or bulk import supplier sheets.
+   - Sales demand analytics with weekly revenue velocity bar charts and AI demand radar.
 
-4. **Tier 3: Industrial Enterprise:**
-   - **Algorithmic Sustainability Index (0–100):** Real-time weighted formula across Solar Energy %, Recyclable Packaging %, Zero Landfill %, and Local Sourcing.
-   - **Downstream Retailer Network:** Directory of connected Kiranas and pharmacies purchasing certified sustainable stock.
-   - **Multi-Branch Management:** Regional distribution hubs and warehouses tracking SKU counts and manager assignments.
+4. **Tier 2: Malls, Wholesales & Clinics:**
+   - **Batch & Expiry Date Radar:** Tracks batch numbers (e.g. `BT-8892`, `AMX-4011`), urgency flags (`Critical <15d`, `Warning <45d`, `Safe`), and safe bio-disposal compliance logging.
+   - **Customer Phone Loyalty & Green Stamp POS:** 10-digit mobile lookup, visit streak milestone discounts (10% on 5th visit), and "Brought Reusable Cloth Bag" Green Stamp discount.
+   - 📱 **Real Dynamic UPI QR Code:** Generates genuine UPI payment QR codes scannable with Google Pay, PhonePe, or Paytm.
+   - 🖨️ **Printable Tax Receipt:** Clean printable store receipt with customer details, item breakdown, tax, and eco-points badge.
 
-5. **AI Intelligence Suite:**
-   - 📸 **AI Wholesale Bill-to-Stock Scanner:** Extracts products, quantities, wholesale rates, and batch codes from paper invoices.
-   - ⚠️ **AI Shelf-Life & Waste Risk Forecaster:** Identifies batches at risk of expiring unsold and suggests flash clearance discounts.
-   - 🌿 **AI Green Transformation Advisor:** Algorithmic recommendations to raise ESG scores with one-click optimization simulation.
+5. **Tier 3: Industrial Enterprise:**
+   - **Algorithmic Sustainability Index (0–100 ESG Score):** Real-time weighted formula across Solar Energy (30%), Recyclable Packaging (25%), Zero Landfill (25%), and Local Sourcing (20%).
+   - **Downstream Retailer Network:** Connected Kiranas & pharmacies purchasing verified green stock with interactive B2B dispatch invoice generator.
+   - 🔄 **Functional Inter-Branch Transfers:** Move supplies between regional logistics hubs and warehouses with live atomic quantity updates.
