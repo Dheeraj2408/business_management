@@ -12,6 +12,7 @@ import { CustomerLoyalty } from './features/midScale/CustomerLoyalty';
 import { SustainabilityScore } from './features/industry/SustainabilityScore';
 import { RetailerNetwork } from './features/industry/RetailerNetwork';
 import { BranchManagement } from './features/industry/BranchManagement';
+import { IndustrialOperations } from './features/industry/IndustrialOperations';
 
 import {
   INITIAL_PRODUCTS,
@@ -27,10 +28,30 @@ import {
   deleteProduct as apiDeleteProduct,
   processCheckout,
   updateSustainability as apiUpdateSustainability,
-  transferBranchStock as apiTransferBranchStock
+  transferBranchStock as apiTransferBranchStock,
+  fetchEmployees,
+  createEmployee,
+  deleteEmployee as apiDeleteEmployee,
+  fetchRawMaterials,
+  createRawMaterial,
+  fetchElectricity,
+  updateElectricity as apiUpdateElectricity,
+  fetchMachines,
+  toggleMachineStatus as apiToggleMachineStatus
 } from './services/api';
 
-import { BusinessTier, User, Product, CustomerLoyalty as CustomerType, SustainabilityMetric, Branch } from './types';
+import {
+  BusinessTier,
+  User,
+  Product,
+  CustomerLoyalty as CustomerType,
+  SustainabilityMetric,
+  Branch,
+  Employee,
+  RawMaterial,
+  ElectricityData,
+  Machine
+} from './types';
 import { Sparkles, Store, Building2, Factory, Database } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -49,17 +70,33 @@ export const App: React.FC = () => {
   const [retailers] = useState(INITIAL_RETAILERS);
   const [branches, setBranches] = useState<Branch[]>(INITIAL_BRANCHES);
 
+  // Industrial Operations State
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
+  const [electricity, setElectricity] = useState<ElectricityData | null>(null);
+  const [machines, setMachines] = useState<Machine[]>([]);
+
   // Modals
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Fetch initial products from backend SQLite
+  // Fetch initial data from backend SQLite / API
   useEffect(() => {
     fetchProducts().then(data => {
-      if (data && data.length > 0) {
-        setProducts(data);
-      }
+      if (data && data.length > 0) setProducts(data);
+    });
+    fetchEmployees().then(data => {
+      if (data && data.length > 0) setEmployees(data);
+    });
+    fetchRawMaterials().then(data => {
+      if (data && data.length > 0) setRawMaterials(data);
+    });
+    fetchElectricity().then(data => {
+      if (data) setElectricity(data);
+    });
+    fetchMachines().then(data => {
+      if (data && data.length > 0) setMachines(data);
     });
   }, []);
 
@@ -198,6 +235,38 @@ export const App: React.FC = () => {
     await apiTransferBranchStock({ sourceBranchId, targetBranchId, quantity, productName });
   };
 
+  // Industrial Operations Handlers
+  const handleAddEmployee = async (newEmp: Partial<Employee>) => {
+    const created = await createEmployee(newEmp);
+    setEmployees(prev => [created, ...prev]);
+  };
+
+  const handleDeleteEmployee = async (id: string) => {
+    setEmployees(prev => prev.filter(e => e.id !== id));
+    await apiDeleteEmployee(id);
+  };
+
+  const handleAddRawMaterial = async (newMat: Partial<RawMaterial>) => {
+    const created = await createRawMaterial(newMat);
+    setRawMaterials(prev => [created, ...prev]);
+  };
+
+  const handleToggleMachine = async (id: string) => {
+    setMachines(prev => prev.map(m => {
+      if (m.id === id) {
+        const nextStatus = m.status === 'Running' ? 'Maintenance' : m.status === 'Maintenance' ? 'Idle' : 'Running';
+        return { ...m, status: nextStatus };
+      }
+      return m;
+    }));
+    await apiToggleMachineStatus(id);
+  };
+
+  const handleUpdateElectricity = async (updates: Partial<ElectricityData>) => {
+    setElectricity(prev => prev ? { ...prev, ...updates } : null);
+    await apiUpdateElectricity(updates);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       
@@ -328,6 +397,19 @@ export const App: React.FC = () => {
                 setSustainability(newMetrics);
                 await apiUpdateSustainability(newMetrics);
               }}
+            />
+
+            {/* Industrial Manufacturing Operations: Workforce, Raw Materials, Power, Machinery */}
+            <IndustrialOperations
+              employees={employees}
+              rawMaterials={rawMaterials}
+              electricity={electricity}
+              machines={machines}
+              onAddEmployee={handleAddEmployee}
+              onDeleteEmployee={handleDeleteEmployee}
+              onAddRawMaterial={handleAddRawMaterial}
+              onToggleMachine={handleToggleMachine}
+              onUpdateElectricity={handleUpdateElectricity}
             />
 
             {/* Downstream Retailer Directory with B2B Invoices */}

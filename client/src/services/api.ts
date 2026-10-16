@@ -1,4 +1,4 @@
-import { Product, CustomerLoyalty, SustainabilityMetric, Branch } from '../types';
+import { Product, CustomerLoyalty, SustainabilityMetric, Branch, Employee, RawMaterial, ElectricityData, Machine } from '../types';
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -175,3 +175,143 @@ export async function scanBillWithAI(imageBase64: string, apiKey?: string): Prom
     ]
   };
 }
+
+// ============================================
+// INDUSTRIAL MANUFACTURING OPERATIONS API
+// ============================================
+
+export async function fetchEmployees(): Promise<Employee[]> {
+  try {
+    const res = await fetch(`${API_BASE}/industry/employees`);
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('operix_employees', JSON.stringify(data));
+      return data;
+    }
+  } catch (err) {
+    console.warn('Backend offline, loading employees from cache');
+  }
+  const cached = localStorage.getItem('operix_employees');
+  return cached ? JSON.parse(cached) : [];
+}
+
+export async function createEmployee(emp: Partial<Employee>): Promise<Employee> {
+  try {
+    const res = await fetch(`${API_BASE}/industry/employees`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(emp)
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Backend offline, saving employee locally');
+  }
+  const newEmp = { ...emp, id: 'emp-' + Date.now() } as Employee;
+  const cached = JSON.parse(localStorage.getItem('operix_employees') || '[]');
+  localStorage.setItem('operix_employees', JSON.stringify([newEmp, ...cached]));
+  return newEmp;
+}
+
+export async function deleteEmployee(id: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/industry/employees/${id}`, { method: 'DELETE' });
+  } catch {
+    // fallback
+  }
+  const cached = JSON.parse(localStorage.getItem('operix_employees') || '[]');
+  localStorage.setItem('operix_employees', JSON.stringify(cached.filter((e: Employee) => e.id !== id)));
+}
+
+export async function fetchRawMaterials(): Promise<RawMaterial[]> {
+  try {
+    const res = await fetch(`${API_BASE}/industry/raw-materials`);
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('operix_raw_materials', JSON.stringify(data));
+      return data;
+    }
+  } catch (err) {
+    console.warn('Backend offline, loading raw materials from cache');
+  }
+  const cached = localStorage.getItem('operix_raw_materials');
+  return cached ? JSON.parse(cached) : [];
+}
+
+export async function createRawMaterial(mat: Partial<RawMaterial>): Promise<RawMaterial> {
+  try {
+    const res = await fetch(`${API_BASE}/industry/raw-materials`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mat)
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Backend offline, saving raw material locally');
+  }
+  const newMat = { ...mat, id: 'raw-' + Date.now() } as RawMaterial;
+  const cached = JSON.parse(localStorage.getItem('operix_raw_materials') || '[]');
+  localStorage.setItem('operix_raw_materials', JSON.stringify([newMat, ...cached]));
+  return newMat;
+}
+
+export async function fetchElectricity(): Promise<ElectricityData | null> {
+  try {
+    const res = await fetch(`${API_BASE}/industry/electricity`);
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('operix_electricity', JSON.stringify(data));
+      return data;
+    }
+  } catch (err) {
+    console.warn('Backend offline, loading electricity from cache');
+  }
+  const cached = localStorage.getItem('operix_electricity');
+  return cached ? JSON.parse(cached) : null;
+}
+
+export async function updateElectricity(el: Partial<ElectricityData>): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/industry/electricity`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(el)
+    });
+  } catch {
+    // fallback
+  }
+  const cached = JSON.parse(localStorage.getItem('operix_electricity') || '{}');
+  localStorage.setItem('operix_electricity', JSON.stringify({ ...cached, ...el }));
+}
+
+export async function fetchMachines(): Promise<Machine[]> {
+  try {
+    const res = await fetch(`${API_BASE}/industry/machines`);
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('operix_machines', JSON.stringify(data));
+      return data;
+    }
+  } catch (err) {
+    console.warn('Backend offline, loading machines from cache');
+  }
+  const cached = localStorage.getItem('operix_machines');
+  return cached ? JSON.parse(cached) : [];
+}
+
+export async function toggleMachineStatus(id: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/industry/machines/${id}/toggle`, { method: 'PUT' });
+  } catch {
+    // fallback
+  }
+  const cached = JSON.parse(localStorage.getItem('operix_machines') || '[]');
+  const updated = cached.map((m: Machine) => {
+    if (m.id === id) {
+      const next = m.status === 'Running' ? 'Maintenance' : m.status === 'Maintenance' ? 'Idle' : 'Running';
+      return { ...m, status: next };
+    }
+    return m;
+  });
+  localStorage.setItem('operix_machines', JSON.stringify(updated));
+}
+

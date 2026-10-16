@@ -18,9 +18,14 @@
    - Everything in Tier 1.
    - **Batch & Expiry Date Radar:** Tracks batch numbers (e.g. `BT-8892`, `AMX-4011`), color-coded urgency flags (`Critical <15d`, `Warning <45d`, `Safe`), and safe bio-disposal compliance logging.
    - **Customer Phone Loyalty & Green Stamp POS:** 10-digit mobile lookup, visit streak milestone discounts (10% on 5th visit), and "Brought Reusable Cloth Bag" Green Stamp discount.
-3. **Tier 3: Industrial Enterprise:**
+3. **Tier 3: Industrial Enterprise & Manufacturing Suite:**
    - Everything in Tier 2.
    - **Algorithmic Sustainability Index (0–100 ESG Score):** Real-time weighted formula across Solar Energy (30%), Recyclable Packaging (25%), Zero Landfill (25%), and Local Sourcing (20%).
+   - **Industrial Manufacturing Operations Suite (`/features/industry/IndustrialOperations.tsx`):**
+     - Factory workforce directory & payroll (`id`, `name`, `salary`, `contact`, shift, department).
+     - Raw material inventory costing (Kraft paper pulp, biopolymers, aluminum foil rolls, resins).
+     - Electricity & power telemetry (Solar generation vs Grid consumption kWh, monthly bill ₹, carbon offset).
+     - Heavy machinery & production lines telemetry (1-click status toggle, kW rating, units/hr output).
    - **Downstream Retailer Network:** Directory of connected Kiranas and clinics buying verified green stock.
    - **Branch Management:** Multi-facility distribution hubs and packaging plants with manager details and localized inventory counts.
 

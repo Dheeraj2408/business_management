@@ -58,7 +58,12 @@ We are developing **Operix**, an adaptive platform that connects everyday store 
    - 📱 **Real Dynamic UPI QR Code:** Generates genuine UPI payment QR codes scannable with Google Pay, PhonePe, or Paytm.
    - 🖨️ **Printable Tax Receipt:** Clean printable store receipt with customer details, item breakdown, tax, and eco-points badge.
 
-5. **Tier 3: Industrial Enterprise:**
+5. **Tier 3: Industrial Enterprise & Manufacturing Suite:**
    - **Algorithmic Sustainability Index (0–100 ESG Score):** Real-time weighted formula across Solar Energy (30%), Recyclable Packaging (25%), Zero Landfill (25%), and Local Sourcing (20%).
+   - 🏭 **Industrial Manufacturing Operations Suite:**
+     - 👷 **Workforce & Factory Payroll Directory:** Tracks employees (`id`, `name`, `salary`, `contact`, `role`, `department`, `shift` A/B/C) with interactive new employee onboarding and payroll calculator.
+     - 📦 **Raw Material Inventory & Inbound Consignments:** Tracks industrial manufacturing inputs (Kraft paper pulp, bio-polymers, aluminum foil roll, starch adhesive) with cost per ton/bag, supplier origin, reorder thresholds, and ESG grades.
+     - ⚡ **Industrial Electricity & Power Telemetry:** Live breakdown of Solar Generation vs Grid Power consumption (kWh), monthly energy bill in ₹, carbon avoided tons, and interactive solar expansion slider.
+     - ⚙️ **Heavy Machinery & Production Line Telemetry:** Monitors factory assembly & corrugation lines (Corrugator Line A1, Thermoformer Unit 2, High-Speed Slitter, Robotic Palletizer) with 1-click status toggling (`Running`, `Maintenance`, `Idle`), power ratings (kW), and real-time hourly output metrics (units/hr).
    - **Downstream Retailer Network:** Connected Kiranas & pharmacies purchasing verified green stock with interactive B2B dispatch invoice generator.
    - 🔄 **Functional Inter-Branch Transfers:** Move supplies between regional logistics hubs and warehouses with live atomic quantity updates.

@@ -202,7 +202,168 @@ const DEFAULT_DATA = {
       status: 'High Demand'
     }
   ],
-  transactions: []
+  transactions: [],
+  employees: [
+    {
+      id: 'emp-101',
+      name: 'Rameshwar Sharma',
+      role: 'Chief Plant Engineer',
+      department: 'Production',
+      salary: 85000,
+      contact: '+91 98230 11452',
+      shift: 'Day Shift (A)',
+      status: 'Active'
+    },
+    {
+      id: 'emp-102',
+      name: 'Sunita Narayanan',
+      role: 'Quality Assurance Chemist',
+      department: 'Quality Control',
+      salary: 62000,
+      contact: '+91 97112 34098',
+      shift: 'Day Shift (A)',
+      status: 'Active'
+    },
+    {
+      id: 'emp-103',
+      name: 'Gurpreet Singh',
+      role: 'Corrugator Machine Master',
+      department: 'Production',
+      salary: 48000,
+      contact: '+91 98450 77123',
+      shift: 'Evening Shift (B)',
+      status: 'Active'
+    },
+    {
+      id: 'emp-104',
+      name: 'Anand Kulkarni',
+      role: 'Electrical & PLC Maintenance Tech',
+      department: 'Maintenance',
+      salary: 52000,
+      contact: '+91 99220 88341',
+      shift: 'Night Shift (C)',
+      status: 'Active'
+    },
+    {
+      id: 'emp-105',
+      name: 'Bhavna Dave',
+      role: 'Industrial Safety Officer',
+      department: 'Safety',
+      salary: 58000,
+      contact: '+91 94030 55612',
+      shift: 'Day Shift (A)',
+      status: 'On Leave'
+    }
+  ],
+  rawMaterials: [
+    {
+      id: 'raw-1',
+      name: 'Virgin & Recycled Kraft Pulp Rolls (180 GSM)',
+      quantity: 45,
+      unit: 'Tons',
+      costPerUnit: 42000, // ₹42k / ton
+      supplier: 'National Agro-Pulp Mills Ltd',
+      sustainabilityGrade: 'A+ (100% Recycled)',
+      reorderThreshold: 15
+    },
+    {
+      id: 'raw-2',
+      name: 'Cornstarch-Based Bio-Polymer Granules',
+      quantity: 120,
+      unit: 'Bags',
+      costPerUnit: 3400, // ₹3.4k / 50kg bag
+      supplier: 'GreenTech BioPlastics',
+      sustainabilityGrade: 'Bio-Based',
+      reorderThreshold: 30
+    },
+    {
+      id: 'raw-3',
+      name: 'Eco-Solvent Non-Toxic Flexographic Inks',
+      quantity: 18,
+      unit: 'Barrels',
+      costPerUnit: 18500, // ₹18.5k / barrel
+      supplier: 'Spectrum Chemical Coatings',
+      sustainabilityGrade: 'A (FSC Certified)',
+      reorderThreshold: 5
+    },
+    {
+      id: 'raw-4',
+      name: 'Galvanized High-Tensile Steel Baling Wire',
+      quantity: 32,
+      unit: 'Kg',
+      costPerUnit: 145, // ₹145 / kg
+      supplier: 'Tata Industrial Fasteners',
+      sustainabilityGrade: 'B (Standard)',
+      reorderThreshold: 10
+    }
+  ],
+  electricity: {
+    totalUnitsKWh: 68000,
+    solarGeneratedKWh: 48000,
+    gridPurchasedKWh: 20000,
+    tariffPerKWh: 6.5,
+    totalMonthlyCost: 442000,
+    peakLoadKW: 420,
+    dailyTrends: [
+      { day: 'Mon', gridKWh: 2800, solarKWh: 6400 },
+      { day: 'Tue', gridKWh: 3100, solarKWh: 6800 },
+      { day: 'Wed', gridKWh: 2900, solarKWh: 7100 },
+      { day: 'Thu', gridKWh: 2700, solarKWh: 6900 },
+      { day: 'Fri', gridKWh: 3300, solarKWh: 7200 },
+      { day: 'Sat', gridKWh: 3500, solarKWh: 7000 },
+      { day: 'Sun', gridKWh: 1700, solarKWh: 6600 }
+    ]
+  },
+  machines: [
+    {
+      id: 'mach-1',
+      name: 'Heavy 5-Ply Corrugator Line #3',
+      model: 'BHS Corrugated 2500M',
+      status: 'Running',
+      powerRatingKW: 185,
+      outputRatePerHour: 1400,
+      unitProduced: 'Cartons/hr',
+      lastServiced: '2026-09-15',
+      nextServiceDue: '2026-11-15',
+      efficiencyPct: 94
+    },
+    {
+      id: 'mach-2',
+      name: 'High-Speed Automated Die-Cutter & Creaser',
+      model: 'Bobst VisionCut 106',
+      status: 'Running',
+      powerRatingKW: 65,
+      outputRatePerHour: 2200,
+      unitProduced: 'Sheets/hr',
+      lastServiced: '2026-10-01',
+      nextServiceDue: '2026-12-01',
+      efficiencyPct: 98
+    },
+    {
+      id: 'mach-3',
+      name: 'Molded Fiber Pulp Thermoforming Station',
+      model: 'Kiefel NaturePrep 800',
+      status: 'Maintenance',
+      powerRatingKW: 95,
+      outputRatePerHour: 850,
+      unitProduced: 'Trays/hr',
+      lastServiced: '2026-10-14',
+      nextServiceDue: '2026-10-18',
+      efficiencyPct: 76
+    },
+    {
+      id: 'mach-4',
+      name: 'Robotic Palletizer & Stretch Hooder',
+      model: 'ABB IRB 660 High-Payload',
+      status: 'Running',
+      powerRatingKW: 35,
+      outputRatePerHour: 60,
+      unitProduced: 'Pallets/hr',
+      lastServiced: '2026-08-20',
+      nextServiceDue: '2026-11-20',
+      efficiencyPct: 99
+    }
+  ]
 };
 
 // Database helper functions

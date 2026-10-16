@@ -251,6 +251,111 @@ app.post('/api/ai/scan-bill', async (req, res) => {
   });
 });
 
+// ============================================
+// INDUSTRIAL MANUFACTURING OPERATIONS API
+// ============================================
+
+// 1. Employees & Payroll
+app.get('/api/industry/employees', (req, res) => {
+  const db = getDatabase();
+  res.json(db.employees || []);
+});
+
+app.post('/api/industry/employees', (req, res) => {
+  const db = getDatabase();
+  const newEmp = {
+    id: req.body.id || 'emp-' + Date.now(),
+    name: req.body.name,
+    role: req.body.role || 'Production Technician',
+    department: req.body.department || 'Production',
+    salary: Number(req.body.salary) || 45000,
+    contact: req.body.contact || '+91 98000 00000',
+    shift: req.body.shift || 'Day Shift (A)',
+    status: req.body.status || 'Active'
+  };
+
+  db.employees = db.employees || [];
+  db.employees.unshift(newEmp);
+  saveDatabase(db);
+  res.status(201).json(newEmp);
+});
+
+app.delete('/api/industry/employees/:id', (req, res) => {
+  const db = getDatabase();
+  db.employees = (db.employees || []).filter(e => e.id !== req.params.id);
+  saveDatabase(db);
+  res.json({ success: true, message: 'Employee removed from roster' });
+});
+
+// 2. Raw Materials & Inbound Costing
+app.get('/api/industry/raw-materials', (req, res) => {
+  const db = getDatabase();
+  res.json(db.rawMaterials || []);
+});
+
+app.post('/api/industry/raw-materials', (req, res) => {
+  const db = getDatabase();
+  const newMat = {
+    id: req.body.id || 'raw-' + Date.now(),
+    name: req.body.name,
+    quantity: Number(req.body.quantity) || 10,
+    unit: req.body.unit || 'Tons',
+    costPerUnit: Number(req.body.costPerUnit) || 10000,
+    supplier: req.body.supplier || 'Industrial Wholesale Corp',
+    sustainabilityGrade: req.body.sustainabilityGrade || 'A+ (100% Recycled)',
+    reorderThreshold: Number(req.body.reorderThreshold) || 5
+  };
+
+  db.rawMaterials = db.rawMaterials || [];
+  db.rawMaterials.unshift(newMat);
+  saveDatabase(db);
+  res.status(201).json(newMat);
+});
+
+app.put('/api/industry/raw-materials/:id', (req, res) => {
+  const db = getDatabase();
+  db.rawMaterials = db.rawMaterials || [];
+  const idx = db.rawMaterials.findIndex(m => m.id === req.params.id);
+  if (idx !== -1) {
+    db.rawMaterials[idx] = { ...db.rawMaterials[idx], ...req.body };
+    saveDatabase(db);
+    return res.json(db.rawMaterials[idx]);
+  }
+  res.status(404).json({ error: 'Raw material not found' });
+});
+
+// 3. Electricity & Power Telemetry
+app.get('/api/industry/electricity', (req, res) => {
+  const db = getDatabase();
+  res.json(db.electricity || {});
+});
+
+app.put('/api/industry/electricity', (req, res) => {
+  const db = getDatabase();
+  db.electricity = { ...(db.electricity || {}), ...req.body };
+  saveDatabase(db);
+  res.json(db.electricity);
+});
+
+// 4. Machinery & Production Lines
+app.get('/api/industry/machines', (req, res) => {
+  const db = getDatabase();
+  res.json(db.machines || []);
+});
+
+app.put('/api/industry/machines/:id/toggle', (req, res) => {
+  const db = getDatabase();
+  db.machines = db.machines || [];
+  const idx = db.machines.findIndex(m => m.id === req.params.id);
+  if (idx !== -1) {
+    const current = db.machines[idx].status;
+    db.machines[idx].status = current === 'Running' ? 'Maintenance' : current === 'Maintenance' ? 'Idle' : 'Running';
+    saveDatabase(db);
+    return res.json(db.machines[idx]);
+  }
+  res.status(404).json({ error: 'Machine not found' });
+});
+
 app.listen(PORT, () => {
   console.log(`Operix Backend REST Server running on http://localhost:${PORT}`);
 });

@@ -74,3 +74,52 @@ export interface ScannedBillItem {
   expiryDate?: string;
   selected: boolean;
 }
+
+// ============================================
+// INDUSTRIAL MANUFACTURING OPERATIONS SUITE
+// ============================================
+
+export interface Employee {
+  id: string;
+  name: string;
+  role: string;
+  department: 'Production' | 'Maintenance' | 'Quality Control' | 'Logistics' | 'Safety';
+  salary: number; // in ₹/month
+  contact: string;
+  shift: 'Day Shift (A)' | 'Evening Shift (B)' | 'Night Shift (C)';
+  status: 'Active' | 'On Leave';
+}
+
+export interface RawMaterial {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: 'Tons' | 'Bags' | 'Barrels' | 'Liters' | 'Kg';
+  costPerUnit: number; // ₹
+  supplier: string;
+  sustainabilityGrade: 'A+ (100% Recycled)' | 'A (FSC Certified)' | 'B (Standard)' | 'Bio-Based';
+  reorderThreshold: number;
+}
+
+export interface ElectricityData {
+  totalUnitsKWh: number;
+  solarGeneratedKWh: number;
+  gridPurchasedKWh: number;
+  tariffPerKWh: number; // ₹
+  totalMonthlyCost: number;
+  peakLoadKW: number;
+  dailyTrends: { day: string; gridKWh: number; solarKWh: number }[];
+}
+
+export interface Machine {
+  id: string;
+  name: string;
+  model: string;
+  status: 'Running' | 'Maintenance' | 'Idle';
+  powerRatingKW: number;
+  outputRatePerHour: number;
+  unitProduced: string;
+  lastServiced: string;
+  nextServiceDue: string;
+  efficiencyPct: number;
+}
