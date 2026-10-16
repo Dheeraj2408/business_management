@@ -1,4 +1,4 @@
-# 🚀 EcoTrade OS — Team Dev Knowledge Base & Context
+# 🚀 Operix — Team Dev Knowledge Base & Context
 
 > **Hackathon:** ALTHON 2.0 (24-Hour Hackathon)  
 > **Team Name:** `team dev`  
@@ -8,7 +8,7 @@
 ---
 
 ## 📌 Project Overview
-**EcoTrade OS** is an adaptive commerce and sustainability operating system spanning from corner Kirana stores to specialized pharmacies and industrial manufacturers.
+**Operix** is an adaptive commerce and sustainability operating system spanning from corner Kirana stores to specialized pharmacies and industrial manufacturers.
 
 ### The 3 Business Tiers (Adaptive Chameleon UI):
 1. **Tier 1: General Store (Kirana / Micro-Retail):**

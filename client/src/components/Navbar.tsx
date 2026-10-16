@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onSwitchTier, onOpenAuth, 
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg text-white tracking-tight">EcoTrade</span>
+                <span className="font-extrabold text-lg text-white tracking-tight">Operix</span>
                 <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   OS v2.0
                 </span>

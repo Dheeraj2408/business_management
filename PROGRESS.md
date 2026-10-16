@@ -3,7 +3,7 @@
 ### 👥 Team Overview
 - **Team Name:** team dev
 - **Team Members:** Dheeraj, Mahesh, Jeshwanth, Revan
-- **Project Name:** EcoTrade OS
+- **Project Name:** Operix
 - **Live Prototype:** `http://localhost:3000`
 
 ---
@@ -14,7 +14,7 @@
 ---
 
 ### 💡 Proposed Solution
-We are developing **EcoTrade OS**, an adaptive platform that connects everyday store management with practical sustainability incentives:
+We are developing **Operix**, an adaptive platform that connects everyday store management with practical sustainability incentives:
 - **Adaptive Store Setup:** An interface that scales to the shop's operational needs—giving Kirana stores and pharmacies simple daily inventory and billing tools, while offering suppliers a clear format to document their sustainability practices.
 - **Low-Friction Daily Management:** Eliminates tedious manual typing through quick voice/AI-based bill scanning, and introduces a simple phone-number visit tracker so merchants can reward repeat shoppers without expensive POS hardware.
 - **Circular Green Incentives:** Directly rewards shoppers who bring reusable bags with instant checkout discounts, and enables shopkeepers to easily discover and stock products from verified eco-conscious suppliers.

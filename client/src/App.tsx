@@ -294,7 +294,7 @@ export const App: React.FC = () => {
           <span className="font-semibold text-slate-400">
             Built by <strong className="text-white">team dev</strong> (Dheeraj, Mahesh, Jeshwanth, Revan)
           </span>
-          <span className="text-emerald-400 font-medium">EcoTrade OS — Live Demo</span>
+          <span className="text-emerald-400 font-medium">Operix — Live Demo</span>
         </div>
       </footer>
 

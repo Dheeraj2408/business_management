@@ -12,7 +12,7 @@ class ProgressPDF(FPDF):
         self.set_y(-14)
         self.set_font("Helvetica", "I", 8)
         self.set_text_color(148, 163, 184) # Slate 400
-        self.cell(0, 8, "EcoTrade OS  |  ALTHON 2.0 Hackathon  |  Prepared by team dev", align="C")
+        self.cell(0, 8, "Operix  |  ALTHON 2.0 Hackathon  |  Prepared by team dev", align="C")
 
 def create_progress_pdf():
     pdf = ProgressPDF(orientation='P', unit='mm', format='A4')
@@ -65,7 +65,7 @@ def create_progress_pdf():
     pdf.set_xy(150, start_y + 8)
     pdf.set_font("Helvetica", "B", 11)
     pdf.set_text_color(5, 150, 105)
-    pdf.cell(40, 5, "EcoTrade OS")
+    pdf.cell(40, 5, "Operix")
     
     pdf.set_xy(14, start_y + 22)
     
@@ -141,7 +141,7 @@ def create_progress_pdf():
     render_section("Feasibility & Delivery Strategy", feasibility_items)
     
     # Output file
-    output_path = r"c:\Users\user\OneDrive\Documents\team dev\EcoTrade_OS_Progress.pdf"
+    output_path = r"c:\Users\user\OneDrive\Documents\team dev\Operix_Progress.pdf"
     pdf.output(output_path)
     print(f"SUCCESS: {output_path}")
 
