@@ -17,12 +17,23 @@ export interface FirebaseConfig {
   storageBucket?: string;
   messagingSenderId?: string;
   appId: string;
+  measurementId?: string;
 }
 
 const STORAGE_KEY = 'operix_firebase_config';
 
+export const DEFAULT_FIREBASE_CONFIG: FirebaseConfig = {
+  apiKey: "AIzaSyBa08qKwAdsXgqqtBIot_UTFgE6Fok1HDc",
+  authDomain: "operix-9cc4e.firebaseapp.com",
+  projectId: "operix-9cc4e",
+  storageBucket: "operix-9cc4e.firebasestorage.app",
+  messagingSenderId: "14822531154",
+  appId: "1:14822531154:web:94efa2b571a2dde2b77f8b",
+  measurementId: "G-Q0W3G251C7"
+};
+
 /**
- * Retrieve current Firebase configuration from localStorage or Vite environment variables.
+ * Retrieve current Firebase configuration from localStorage, Vite environment variables, or default project.
  */
 export function getFirebaseConfig(): FirebaseConfig | null {
   try {
@@ -50,11 +61,12 @@ export function getFirebaseConfig(): FirebaseConfig | null {
       projectId: envProjectId,
       storageBucket: metaEnv.VITE_FIREBASE_STORAGE_BUCKET || `${envProjectId}.appspot.com`,
       messagingSenderId: metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-      appId: envAppId || ''
+      appId: envAppId || '',
+      measurementId: metaEnv.VITE_FIREBASE_MEASUREMENT_ID || ''
     };
   }
 
-  return null;
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 /**
