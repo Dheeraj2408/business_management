@@ -1,13 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { Leaf, Store, Building2, Factory, LogOut, Sparkles, Settings, Database, Flame } from 'lucide-react';
-import { BusinessTier, User } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Store,
+  Building2,
+  Factory,
+  LogOut,
+  Sparkles,
+  Settings,
+  Database,
+  Flame,
+  ChevronDown,
+  Plus,
+  Check,
+  Layers,
+  ShieldCheck
+} from 'lucide-react';
+import { BusinessTier, User, Business } from '../types';
 import { isServerOnline } from '../services/api';
 import { isFirebaseConfigured } from '../services/firebase';
 
 interface NavbarProps {
   user: User;
   onSwitchTier: (tier: BusinessTier) => void;
-  onOpenAuth: () => void;
+  onSwitchBusiness: (businessId: string) => void;
+  onAddNewBusiness: () => void;
+  onLogout: () => void;
   onOpenScanner: () => void;
   onOpenSettings: () => void;
 }
@@ -15,12 +31,16 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   user,
   onSwitchTier,
-  onOpenAuth,
+  onSwitchBusiness,
+  onAddNewBusiness,
+  onLogout,
   onOpenScanner,
   onOpenSettings
 }) => {
   const [dbConnected, setDbConnected] = useState<boolean>(true);
   const [isFbActive, setIsFbActive] = useState<boolean>(isFirebaseConfigured());
+  const [businessDropdownOpen, setBusinessDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     isServerOnline().then(setDbConnected);
@@ -32,131 +52,219 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const getTierBadge = () => {
-    switch (user.tier) {
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setBusinessDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getTierDetails = (tier: BusinessTier) => {
+    switch (tier) {
       case 'general_store':
         return {
-          label: 'Operix Micro (Kirana & Retail)',
-          icon: <Store className="w-4 h-4 text-emerald-400" />,
-          color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+          shortLabel: 'Minor',
+          fullLabel: 'Operix Micro (Kirana & Retail)',
+          icon: <Store className="w-3.5 h-3.5 text-zinc-300" />
         };
       case 'mall_clinic':
         return {
-          label: 'Operix Commercial (Malls & Clinics)',
-          icon: <Building2 className="w-4 h-4 text-sky-400" />,
-          color: 'bg-sky-500/10 text-sky-400 border-sky-500/20'
+          shortLabel: 'Commercial',
+          fullLabel: 'Operix Commercial (Malls & Clinics)',
+          icon: <Building2 className="w-3.5 h-3.5 text-zinc-300" />
         };
       case 'industry':
         return {
-          label: 'Operix Enterprise (Manufacturing)',
-          icon: <Factory className="w-4 h-4 text-purple-400" />,
-          color: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+          shortLabel: 'Enterprise',
+          fullLabel: 'Operix Enterprise (Manufacturing)',
+          icon: <Factory className="w-3.5 h-3.5 text-zinc-300" />
         };
     }
   };
 
-  const badge = getTierBadge();
+  const activeTierDetails = getTierDetails(user.tier);
+  const businesses = user.businesses && user.businesses.length > 0
+    ? user.businesses
+    : [{ id: 'b-default', name: user.storeName, tier: user.tier }];
+
+  const activeBusiness = businesses.find(b => b.id === user.activeBusinessId) || businesses[0];
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+    <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800 text-white selection:bg-white selection:text-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-3">
           
           {/* Logo & Platform Name */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950/50">
-              <Leaf className="w-6 h-6 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-black tracking-tighter text-lg shadow-md shadow-white/10">
+              O
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg text-white tracking-tight">Operix</span>
-                <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  OS v2.0
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-700">
+                  v2.0
                 </span>
                 {isFbActive ? (
-                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                    <Flame className="w-2.5 h-2.5 text-amber-400" />
-                    Firebase Cloud
+                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono font-bold text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-full border border-zinc-700">
+                    <Flame className="w-2.5 h-2.5 text-white" />
+                    Cloud Sync
                   </span>
                 ) : dbConnected ? (
-                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <Database className="w-2.5 h-2.5" />
-                    Live SQLite
+                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono font-bold text-zinc-400 bg-zinc-950 px-2 py-0.5 rounded-full border border-zinc-800">
+                    <Database className="w-2.5 h-2.5 text-zinc-400" />
+                    Local SQLite
                   </span>
                 ) : null}
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">Adaptive Commerce & Sustainability Operating System</p>
+              <p className="text-[11px] text-zinc-400 hidden sm:block">Adaptive Commerce & Sustainability Operating System</p>
             </div>
           </div>
 
-          {/* Quick 1-Click Judge Tier Switcher */}
-          <div className="hidden md:flex items-center bg-slate-950/70 p-1 rounded-xl border border-slate-800">
+          {/* Multi-Business Switcher Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setBusinessDropdownOpen(prev => !prev)}
+              className="btn-black flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold"
+              title="Switch business branch or enterprise"
+            >
+              <Layers className="w-3.5 h-3.5 text-zinc-300" />
+              <div className="text-left flex items-center gap-1.5">
+                <span className="max-w-[130px] sm:max-w-[170px] truncate font-bold text-white">
+                  {activeBusiness.name}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono">
+                  {activeTierDetails.shortLabel}
+                </span>
+              </div>
+              <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${businessDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {businessDropdownOpen && (
+              <div className="absolute left-0 mt-2 w-72 bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl p-2 z-50 animate-fade-in">
+                <div className="px-2.5 py-1.5 border-b border-zinc-800 text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex items-center justify-between">
+                  <span>Merchant Businesses ({businesses.length})</span>
+                  <span className="text-zinc-500 font-normal">{user.name.split(' ')[0]}</span>
+                </div>
+
+                <div className="py-1 max-h-56 overflow-y-auto space-y-1">
+                  {businesses.map((biz) => {
+                    const isCurrent = biz.id === activeBusiness.id;
+                    const tierMeta = getTierDetails(biz.tier);
+                    return (
+                      <button
+                        key={biz.id}
+                        type="button"
+                        onClick={() => {
+                          onSwitchBusiness(biz.id);
+                          setBusinessDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-xs text-left transition ${
+                          isCurrent
+                            ? 'bg-zinc-800 text-white font-bold'
+                            : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          {tierMeta.icon}
+                          <div className="truncate">
+                            <div className="truncate">{biz.name}</div>
+                            <div className="text-[10px] text-zinc-400 font-normal">{tierMeta.shortLabel} Scale</div>
+                          </div>
+                        </div>
+                        {isCurrent && <Check className="w-3.5 h-3.5 text-white flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Add Business action */}
+                <div className="pt-1.5 mt-1 border-t border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBusinessDropdownOpen(false);
+                      onAddNewBusiness();
+                    }}
+                    className="btn-black w-full py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Register Another Business</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 1-Click Scale Selector (Chameleon Adaptive Switcher) */}
+          <div className="hidden lg:flex items-center bg-zinc-950 p-1 rounded-xl border border-zinc-800">
             <button
               onClick={() => onSwitchTier('general_store')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 user.tier === 'general_store'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'btn-white shadow'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Store className="w-3.5 h-3.5" />
-              Operix Micro
+              <span>Operix Micro</span>
             </button>
             <button
               onClick={() => onSwitchTier('mall_clinic')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 user.tier === 'mall_clinic'
-                  ? 'bg-sky-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'btn-white shadow'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              Operix Commercial
+              <span>Operix Commercial</span>
             </button>
             <button
               onClick={() => onSwitchTier('industry')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 user.tier === 'industry'
-                  ? 'bg-purple-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'btn-white shadow'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Factory className="w-3.5 h-3.5" />
-              Operix Enterprise
+              <span>Operix Enterprise</span>
             </button>
           </div>
 
-          {/* Actions & User Profile */}
-          <div className="flex items-center gap-2.5">
-            {/* AI Bill Scanner Quick Trigger */}
+          {/* Quick Actions (AI Scanner, Settings, Logout) */}
+          <div className="flex items-center gap-2">
+            {/* AI Bill Scanner */}
             <button
               onClick={onOpenScanner}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 transition-all transform active:scale-95"
+              className="btn-black flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+              title="AI Invoice & Bill OCR Scanner"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
               <span className="hidden sm:inline">AI Bill Scanner</span>
             </button>
 
-            {/* Current Active Mode Badge */}
-            <div className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold ${badge.color}`}>
-              {badge.icon}
-              <span className="max-w-[120px] truncate">{user.storeName}</span>
-            </div>
-
-            {/* Settings Gear (Gemini Key & UPI) */}
+            {/* Settings */}
             <button
               onClick={onOpenSettings}
-              title="System Settings (Gemini API & UPI)"
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+              title="System Settings"
+              className="btn-black p-2 rounded-xl"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4 text-zinc-300" />
             </button>
 
-            {/* Merchant Switch / Login Modal Button */}
+            {/* Logout */}
             <button
-              onClick={onOpenAuth}
-              title="Switch Account or Login"
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              onClick={onLogout}
+              title="Log Out / Switch Merchant"
+              className="btn-black p-2 rounded-xl text-zinc-400 hover:text-white"
             >
               <LogOut className="w-4 h-4" />
             </button>

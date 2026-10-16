@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
+import { MerchantLogin } from './components/MerchantLogin';
+import { AddBusinessModal } from './components/AddBusinessModal';
 import { AuthModal } from './components/AuthModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AIBillScanner } from './features/ai/AIBillScanner';
@@ -42,6 +44,7 @@ import {
 
 import {
   BusinessTier,
+  Business,
   User,
   Product,
   CustomerLoyalty as CustomerType,
@@ -76,13 +79,20 @@ import { isFirebaseConfigured } from './services/firebase';
 import { Sparkles, Store, Building2, Factory, Database } from 'lucide-react';
 
 export const App: React.FC = () => {
-  // Global State
-  const [user, setUser] = useState<User>({
-    id: 'usr-kirana',
-    name: 'Venkatesh Rao',
-    emailOrPhone: '+91 98765 43210',
-    storeName: 'Sri Lakshmi Kirana & General Store',
-    tier: 'general_store'
+  // Global State (Null by default -> forces Merchant Login on first visit!)
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem('operix_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.name && parsed.tier) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse saved user', e);
+    }
+    return null;
   });
 
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -101,6 +111,7 @@ export const App: React.FC = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAddBusinessOpen, setIsAddBusinessOpen] = useState(false);
 
   // Fetch initial data from SQLite & attach real-time Cloud Firestore listeners
   useEffect(() => {
@@ -170,18 +181,76 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Login handler
+  const handleLogin = (newUser: User) => {
+    setUser(newUser);
+    localStorage.setItem('operix_user', JSON.stringify(newUser));
+  };
+
+  // Logout handler
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('operix_user');
+  };
+
+  // Switch Active Business
+  const handleSwitchBusiness = (businessId: string) => {
+    if (!user) return;
+    const selected = (user.businesses || []).find(b => b.id === businessId);
+    if (selected) {
+      const updatedUser: User = {
+        ...user,
+        activeBusinessId: selected.id,
+        storeName: selected.name,
+        tier: selected.tier
+      };
+      setUser(updatedUser);
+      localStorage.setItem('operix_user', JSON.stringify(updatedUser));
+    }
+  };
+
+  // Add Additional Business to Account
+  const handleAddNewBusiness = (newBiz: Business) => {
+    if (!user) return;
+    const currentBusinesses = user.businesses && user.businesses.length > 0
+      ? user.businesses
+      : [{ id: 'biz-default', name: user.storeName, tier: user.tier }];
+
+    const updatedBusinesses = [...currentBusinesses, newBiz];
+    const updatedUser: User = {
+      ...user,
+      businesses: updatedBusinesses,
+      activeBusinessId: newBiz.id,
+      storeName: newBiz.name,
+      tier: newBiz.tier
+    };
+    setUser(updatedUser);
+    localStorage.setItem('operix_user', JSON.stringify(updatedUser));
+  };
+
   // Switch tier handler
   const handleSwitchTier = (tier: BusinessTier) => {
+    if (!user) return;
     let updatedStoreName = user.storeName;
-    if (tier === 'general_store') updatedStoreName = 'Sri Lakshmi Kirana & General Store';
-    if (tier === 'mall_clinic') updatedStoreName = 'MetroCare Pharmacy & Health Mart';
-    if (tier === 'industry') updatedStoreName = 'EcoPack Green Mfg Industries Ltd';
+    if (tier === 'general_store' && !user.storeName) updatedStoreName = 'Sri Lakshmi Kirana & General Store';
+    if (tier === 'mall_clinic' && !user.storeName) updatedStoreName = 'MetroCare Pharmacy & Health Mart';
+    if (tier === 'industry' && !user.storeName) updatedStoreName = 'EcoPack Green Mfg Industries Ltd';
 
-    setUser(prev => ({
-      ...prev,
+    const updatedBusinesses = (user.businesses || []).map(b => {
+      if (b.id === user.activeBusinessId) {
+        return { ...b, tier };
+      }
+      return b;
+    });
+
+    const updatedUser: User = {
+      ...user,
       tier,
-      storeName: updatedStoreName
-    }));
+      storeName: updatedStoreName,
+      businesses: updatedBusinesses
+    };
+    setUser(updatedUser);
+    localStorage.setItem('operix_user', JSON.stringify(updatedUser));
   };
 
   // Stock Quantity Updater
@@ -372,14 +441,21 @@ export const App: React.FC = () => {
     await apiUpdateElectricity(updates);
   };
 
+  // If user is not logged in, first page MUST be Merchant Login!
+  if (!user) {
+    return <MerchantLogin onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-white selection:text-black">
       
       {/* Top Navigation */}
       <Navbar
         user={user}
         onSwitchTier={handleSwitchTier}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onSwitchBusiness={handleSwitchBusiness}
+        onAddNewBusiness={() => setIsAddBusinessOpen(true)}
+        onLogout={handleLogout}
         onOpenScanner={() => setIsScannerOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
@@ -388,18 +464,20 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
         {/* Adaptive Context Banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              {user.tier === 'general_store' && <Store className="w-5 h-5 text-emerald-400" />}
-              {user.tier === 'mall_clinic' && <Building2 className="w-5 h-5 text-sky-400" />}
-              {user.tier === 'industry' && <Factory className="w-5 h-5 text-purple-400" />}
+              <div className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-white">
+                {user.tier === 'general_store' && <Store className="w-4 h-4 text-white" />}
+                {user.tier === 'mall_clinic' && <Building2 className="w-4 h-4 text-white" />}
+                {user.tier === 'industry' && <Factory className="w-4 h-4 text-white" />}
+              </div>
               <h2 className="text-lg font-black text-white">{user.storeName}</h2>
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300">
-                {user.emailOrPhone}
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
+                {user.tier === 'general_store' ? 'Minor Scale' : user.tier === 'mall_clinic' ? 'Commercial Scale' : 'Enterprise Scale'}
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-zinc-400">
               {user.tier === 'general_store' && "Viewing Operix Micro Workspace: Voice & AI Stock Management + Demand Statistics"}
               {user.tier === 'mall_clinic' && "Viewing Operix Commercial Workspace: Batch Expiry Radar + Phone Number Loyalty + UPI QR POS"}
               {user.tier === 'industry' && "Viewing Operix Enterprise Workspace: Industrial Operations Suite + ESG Index + Retailer Directory"}
@@ -409,16 +487,16 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsScannerOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition"
+              className="btn-black flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
             >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <Sparkles className="w-3.5 h-3.5 text-white" />
               <span>Scan Bill with AI</span>
             </button>
             <button
-              onClick={() => setIsAuthOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition"
+              onClick={() => setIsAddBusinessOpen(true)}
+              className="btn-black px-3 py-1.5 rounded-xl text-xs font-semibold"
             >
-              Switch Account
+              + Add Business
             </button>
           </div>
         </div>
@@ -546,10 +624,16 @@ export const App: React.FC = () => {
       </main>
 
       {/* Modals */}
+      <AddBusinessModal
+        isOpen={isAddBusinessOpen}
+        onClose={() => setIsAddBusinessOpen(false)}
+        onAdd={handleAddNewBusiness}
+      />
+
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLogin={setUser}
+        onLogin={handleLogin}
       />
 
       <SettingsModal
@@ -567,13 +651,13 @@ export const App: React.FC = () => {
       />
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-900 bg-slate-950/80 py-4 text-center text-xs text-slate-500">
+      <footer className="mt-auto border-t border-zinc-900 bg-black py-4 text-center text-xs text-zinc-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>ALTHON 2.0 • 24-Hour Hackathon Prototype</span>
-          <span className="font-semibold text-slate-400">
+          <span className="font-semibold text-zinc-400">
             Built by <strong className="text-white">team dev</strong> (Dheeraj, Mahesh, Jeshwanth, Revan)
           </span>
-          <span className="text-emerald-400 font-medium">Operix Full-Stack — Live Demo</span>
+          <span className="text-zinc-300 font-medium font-mono">Operix Chameleon OS — Live Demo</span>
         </div>
       </footer>
 

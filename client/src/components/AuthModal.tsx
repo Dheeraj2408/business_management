@@ -20,12 +20,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
     e.preventDefault();
     if (!phoneOrEmail) return;
 
+    const finalStoreName = storeName || (selectedTier === 'general_store' ? 'Sri Krishna Provisions' : selectedTier === 'mall_clinic' ? 'Apex Wellness Clinic' : 'EcoPack Industries Ltd');
+    const bizId = 'biz-' + Date.now();
     const user: User = {
       id: 'usr-' + Date.now(),
       name: phoneOrEmail.includes('@') ? phoneOrEmail.split('@')[0] : 'Merchant ' + phoneOrEmail.slice(-4),
       emailOrPhone: phoneOrEmail,
-      storeName: storeName || (selectedTier === 'general_store' ? 'Sri Krishna Provisions' : selectedTier === 'mall_clinic' ? 'Apex Wellness Clinic' : 'EcoPack Industries Ltd'),
-      tier: selectedTier
+      storeName: finalStoreName,
+      tier: selectedTier,
+      businesses: [{ id: bizId, name: finalStoreName, tier: selectedTier }],
+      activeBusinessId: bizId
     };
 
     onLogin(user);
@@ -35,28 +39,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
   const handleQuickDemo = (tier: BusinessTier) => {
     let mockUser: User;
     if (tier === 'general_store') {
+      const bId = 'b-kirana';
       mockUser = {
         id: 'usr-kirana',
         name: 'Venkatesh Rao',
         emailOrPhone: '+91 98765 43210',
         storeName: 'Sri Lakshmi Kirana & General Store',
-        tier: 'general_store'
+        tier: 'general_store',
+        businesses: [{ id: bId, name: 'Sri Lakshmi Kirana & General Store', tier: 'general_store' }],
+        activeBusinessId: bId
       };
     } else if (tier === 'mall_clinic') {
+      const bId = 'b-clinic';
       mockUser = {
         id: 'usr-clinic',
         name: 'Dr. Kavita Reddy',
         emailOrPhone: '+91 97011 23456',
         storeName: 'MetroCare Pharmacy & Health Mart',
-        tier: 'mall_clinic'
+        tier: 'mall_clinic',
+        businesses: [{ id: bId, name: 'MetroCare Pharmacy & Health Mart', tier: 'mall_clinic' }],
+        activeBusinessId: bId
       };
     } else {
+      const bId = 'b-industry';
       mockUser = {
         id: 'usr-industry',
         name: 'Rajesh Varma (COO)',
         emailOrPhone: 'rajesh@ecopackmfg.com',
         storeName: 'EcoPack Green Mfg Industries Ltd',
-        tier: 'industry'
+        tier: 'industry',
+        businesses: [{ id: bId, name: 'EcoPack Green Mfg Industries Ltd', tier: 'industry' }],
+        activeBusinessId: bId
       };
     }
 

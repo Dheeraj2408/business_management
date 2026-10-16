@@ -1,11 +1,21 @@
 export type BusinessTier = 'general_store' | 'mall_clinic' | 'industry';
 
+export interface Business {
+  id: string;
+  name: string;
+  tier: BusinessTier; // 'general_store' (Minor) | 'mall_clinic' (Commercial) | 'industry' (Enterprise)
+  category?: string;
+  city?: string;
+}
+
 export interface User {
   id: string;
   name: string;
   emailOrPhone: string;
-  storeName: string;
-  tier: BusinessTier;
+  storeName: string; // Active business name
+  tier: BusinessTier; // Active business tier
+  businesses: Business[];
+  activeBusinessId: string;
 }
 
 export interface Product {
