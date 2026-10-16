@@ -92,21 +92,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
               className="flex flex-col items-center justify-center p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition"
             >
               <Store className="w-4 h-4 mb-1" />
-              Kirana Store
+              Operix Micro
             </button>
             <button
               onClick={() => handleQuickDemo('mall_clinic')}
               className="flex flex-col items-center justify-center p-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 text-xs font-semibold transition"
             >
               <Building2 className="w-4 h-4 mb-1" />
-              Clinic / Mart
+              Operix Commercial
             </button>
             <button
               onClick={() => handleQuickDemo('industry')}
               className="flex flex-col items-center justify-center p-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-semibold transition"
             >
               <Factory className="w-4 h-4 mb-1" />
-              Industry ESG
+              Operix Enterprise
             </button>
           </div>
         </div>
@@ -185,7 +185,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
                 }`}
               >
                 <Store className="w-4 h-4 mx-auto mb-1 text-emerald-400" />
-                <div className="text-[11px] font-bold">General Store</div>
+                <div className="text-[11px] font-bold">Operix Micro</div>
                 <div className="text-[9px] text-slate-500">Kirana & Retail</div>
               </div>
 
@@ -198,8 +198,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
                 }`}
               >
                 <Building2 className="w-4 h-4 mx-auto mb-1 text-sky-400" />
-                <div className="text-[11px] font-bold">Mall / Clinic</div>
-                <div className="text-[9px] text-slate-500">Expiry & Loyalty</div>
+                <div className="text-[11px] font-bold">Operix Commercial</div>
+                <div className="text-[9px] text-slate-500">Malls & Clinics</div>
               </div>
 
               <div
@@ -211,8 +211,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
                 }`}
               >
                 <Factory className="w-4 h-4 mx-auto mb-1 text-purple-400" />
-                <div className="text-[11px] font-bold">Industry</div>
-                <div className="text-[9px] text-slate-500">ESG & Branches</div>
+                <div className="text-[11px] font-bold">Operix Enterprise</div>
+                <div className="text-[9px] text-slate-500">Manufacturing & ESG</div>
               </div>
             </div>
           </div>

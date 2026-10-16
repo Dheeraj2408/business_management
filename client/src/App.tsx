@@ -295,9 +295,9 @@ export const App: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              {user.tier === 'general_store' && "Viewing General Store Workspace: Voice & AI Stock Management + Demand Statistics"}
-              {user.tier === 'mall_clinic' && "Viewing Mall / Clinic Workspace: Batch Expiry Radar + Phone Number Loyalty Engine"}
-              {user.tier === 'industry' && "Viewing Enterprise Industry Workspace: ESG Sustainability Index + Retailer Directory + Branch Oversight"}
+              {user.tier === 'general_store' && "Viewing Operix Micro Workspace: Voice & AI Stock Management + Demand Statistics"}
+              {user.tier === 'mall_clinic' && "Viewing Operix Commercial Workspace: Batch Expiry Radar + Phone Number Loyalty + UPI QR POS"}
+              {user.tier === 'industry' && "Viewing Operix Enterprise Workspace: Industrial Operations Suite + ESG Index + Retailer Directory"}
             </p>
           </div>
 
@@ -319,8 +319,8 @@ export const App: React.FC = () => {
         </div>
 
         {/* ========================================================
-            TIER 1: GENERAL STORES
-            Features: Stock Management + Sales Statistics
+            TIER 1: OPERIX MICRO (Kirana & Micro-Retail)
+            Features: Stock Management + Sales Statistics + Voice POS
            ======================================================== */}
         {user.tier === 'general_store' && (
           <div className="space-y-6 animate-fade-in">
@@ -339,8 +339,8 @@ export const App: React.FC = () => {
         )}
 
         {/* ========================================================
-            TIER 2: MALLS / WHOLESALES / CLINICS
-            Features: Expiry Date Radar + Customer Phone Loyalty + Stock + Stats
+            TIER 2: OPERIX COMMERCIAL (Malls, Clinics & Wholesale)
+            Features: Expiry Date Radar + Customer Phone Loyalty + Dynamic UPI POS
            ======================================================== */}
         {user.tier === 'mall_clinic' && (
           <div className="space-y-6 animate-fade-in">
@@ -379,8 +379,8 @@ export const App: React.FC = () => {
         )}
 
         {/* ========================================================
-            TIER 3: INDUSTRIES / ENTERPRISE
-            Features: ESG Sustainability Index + AI Green Advisor + Retailers + Branches
+            TIER 3: OPERIX ENTERPRISE (Industrial Manufacturing Suite)
+            Features: Industrial Operations + ESG Index + Retailers + Branches
            ======================================================== */}
         {user.tier === 'industry' && (
           <div className="space-y-6 animate-fade-in">

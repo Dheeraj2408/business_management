@@ -11,14 +11,14 @@
 **Operix** is an adaptive commerce and sustainability operating system spanning from corner Kirana stores to specialized pharmacies and industrial manufacturers.
 
 ### The 3 Business Tiers (Adaptive Chameleon UI):
-1. **Tier 1: General Store (Kirana / Micro-Retail):**
+1. **Tier 1: Operix Micro (Kirana & Micro-Retail):**
    - Fast inventory catalog with search, category filtering, low-stock warnings, and inline quantity adjustments (+ / -).
    - Sales & demand statistics with weekly revenue velocity bar charts and AI demand radar.
-2. **Tier 2: Malls, Wholesales & Clinics:**
+2. **Tier 2: Operix Commercial (Malls, Clinics & Wholesales):**
    - Everything in Tier 1.
    - **Batch & Expiry Date Radar:** Tracks batch numbers (e.g. `BT-8892`, `AMX-4011`), color-coded urgency flags (`Critical <15d`, `Warning <45d`, `Safe`), and safe bio-disposal compliance logging.
    - **Customer Phone Loyalty & Green Stamp POS:** 10-digit mobile lookup, visit streak milestone discounts (10% on 5th visit), and "Brought Reusable Cloth Bag" Green Stamp discount.
-3. **Tier 3: Industrial Enterprise & Manufacturing Suite:**
+3. **Tier 3: Operix Enterprise (Industrial Manufacturing Suite):**
    - Everything in Tier 2.
    - **Algorithmic Sustainability Index (0–100 ESG Score):** Real-time weighted formula across Solar Energy (30%), Recyclable Packaging (25%), Zero Landfill (25%), and Local Sourcing (20%).
    - **Industrial Manufacturing Operations Suite (`/features/industry/IndustrialOperations.tsx`):**

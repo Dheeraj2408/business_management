@@ -32,19 +32,19 @@ export const Navbar: React.FC<NavbarProps> = ({
     switch (user.tier) {
       case 'general_store':
         return {
-          label: 'General Store (Kirana)',
+          label: 'Operix Micro (Kirana & Retail)',
           icon: <Store className="w-4 h-4 text-emerald-400" />,
           color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
         };
       case 'mall_clinic':
         return {
-          label: 'Mall / Clinic / Wholesale',
+          label: 'Operix Commercial (Malls & Clinics)',
           icon: <Building2 className="w-4 h-4 text-sky-400" />,
           color: 'bg-sky-500/10 text-sky-400 border-sky-500/20'
         };
       case 'industry':
         return {
-          label: 'Industrial Enterprise',
+          label: 'Operix Enterprise (Manufacturing)',
           icon: <Factory className="w-4 h-4 text-purple-400" />,
           color: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
         };
@@ -91,7 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Store className="w-3.5 h-3.5" />
-              Kirana / Store
+              Operix Micro
             </button>
             <button
               onClick={() => onSwitchTier('mall_clinic')}
@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              Clinic / Mall
+              Operix Commercial
             </button>
             <button
               onClick={() => onSwitchTier('industry')}
@@ -113,7 +113,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Factory className="w-3.5 h-3.5" />
-              Industry ESG
+              Operix Enterprise
             </button>
           </div>
 

@@ -47,18 +47,18 @@ We are developing **Operix**, an adaptive platform that connects everyday store 
    - ⚠️ **AI Shelf-Life Risk Forecaster:** Detects perishables approaching expiry and applies 20% flash clearance discounts.
    - 🌿 **AI Green Advisor:** Algorithmic recommendations to raise ESG scores with one-click optimization simulation (+10 pts).
 
-3. **Tier 1: General Stores (Kirana & Micro-Retail):**
+3. **Tier 1: Operix Micro (Kirana & Micro-Retail):**
    - Live inventory management with search, category filtering, low-stock warnings, and inline quantity adjustments (+ / -).
    - **CSV Export & Import:** Download full store catalog to `.csv` or bulk import supplier sheets.
    - Sales demand analytics with weekly revenue velocity bar charts and AI demand radar.
 
-4. **Tier 2: Malls, Wholesales & Clinics:**
+4. **Tier 2: Operix Commercial (Malls, Clinics & Wholesales):**
    - **Batch & Expiry Date Radar:** Tracks batch numbers (e.g. `BT-8892`, `AMX-4011`), urgency flags (`Critical <15d`, `Warning <45d`, `Safe`), and safe bio-disposal compliance logging.
    - **Customer Phone Loyalty & Green Stamp POS:** 10-digit mobile lookup, visit streak milestone discounts (10% on 5th visit), and "Brought Reusable Cloth Bag" Green Stamp discount.
    - 📱 **Real Dynamic UPI QR Code:** Generates genuine UPI payment QR codes scannable with Google Pay, PhonePe, or Paytm.
    - 🖨️ **Printable Tax Receipt:** Clean printable store receipt with customer details, item breakdown, tax, and eco-points badge.
 
-5. **Tier 3: Industrial Enterprise & Manufacturing Suite:**
+5. **Tier 3: Operix Enterprise (Industrial Manufacturing Suite):**
    - **Algorithmic Sustainability Index (0–100 ESG Score):** Real-time weighted formula across Solar Energy (30%), Recyclable Packaging (25%), Zero Landfill (25%), and Local Sourcing (20%).
    - 🏭 **Industrial Manufacturing Operations Suite:**
      - 👷 **Workforce & Factory Payroll Directory:** Tracks employees (`id`, `name`, `salary`, `contact`, `role`, `department`, `shift` A/B/C) with interactive new employee onboarding and payroll calculator.
