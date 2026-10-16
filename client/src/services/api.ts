@@ -155,15 +155,69 @@ export async function transferBranchStock(payload: {
 // ========================
 
 export async function scanBillWithAI(imageBase64: string, apiKey?: string): Promise<any> {
+  const keyToUse = apiKey || localStorage.getItem('operix_gemini_key') || (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
+
+  // 1. First try Express Backend
   try {
     const res = await fetch(`${API_BASE}/ai/scan-bill`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64, apiKey })
+      body: JSON.stringify({ imageBase64, apiKey: keyToUse })
     });
-    if (res.ok) return await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.items && data.items.length > 0) return data;
+    }
   } catch (err) {
-    console.warn('Backend offline for AI scan');
+    console.warn('Backend offline for AI scan, attempting direct Gemini client call...');
+  }
+
+  // 2. Direct browser Gemini call (100% resilient if backend is sleeping)
+  if (keyToUse && imageBase64) {
+    try {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${keyToUse}`;
+      const payload = {
+        contents: [
+          {
+            parts: [
+              {
+                text: "Extract invoice or receipt items in strictly valid JSON format. Return an array of objects with keys: name (string), quantity (number), unit (string e.g. bags, bottles, strips, packs), costPrice (number), mrp (number), batchNumber (string or empty), expiryDate (YYYY-MM-DD or empty). Example output: [{\"name\": \"Basmati Rice\", \"quantity\": 10, \"unit\": \"bags\", \"costPrice\": 200, \"mrp\": 250, \"batchNumber\": \"BT-101\", \"expiryDate\": \"2027-01-01\"}]. Return ONLY the JSON array."
+              },
+              {
+                inline_data: {
+                  mime_type: "image/jpeg",
+                  data: imageBase64.replace(/^data:image\/[a-z]+;base64,/, "")
+                }
+              }
+            ]
+          }
+        ]
+      };
+
+      const response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const match = rawText.match(/\[[\s\S]*\]/);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return {
+              success: true,
+              provider: 'Google Gemini 2.5 (Flash-Lite Live)',
+              items: parsed
+            };
+          }
+        }
+      }
+    } catch (browserErr) {
+      console.warn('Direct browser Gemini call failed:', browserErr);
+    }
   }
 
   return {

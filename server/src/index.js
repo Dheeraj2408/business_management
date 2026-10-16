@@ -195,43 +195,60 @@ app.post('/api/branches/transfer', (req, res) => {
 
 app.post('/api/ai/scan-bill', async (req, res) => {
   const { imageBase64, apiKey } = req.body;
-  const keyToUse = apiKey || process.env.GEMINI_API_KEY;
+  const keyToUse = apiKey || process.env.GEMINI_API_KEY || '';
 
   if (keyToUse && imageBase64) {
     try {
-      // Call Google Gemini 1.5 Flash Vision API
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToUse}`;
-      
-      const payload = {
-        contents: [
-          {
-            parts: [
+      // Try Google Gemini Flash Lite Latest or Gemini Flash Latest
+      const modelsToTry = ['models/gemini-flash-lite-latest', 'models/gemini-flash-latest'];
+      let parsedItems = null;
+      let activeModel = 'Google Gemini Flash';
+
+      for (const model of modelsToTry) {
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${keyToUse}`;
+          const payload = {
+            contents: [
               {
-                text: "Extract invoice or receipt items in strictly valid JSON format. Return an array of objects with keys: name (string), quantity (number), unit (string e.g. bags, bottles, strips), costPrice (number), mrp (number), batchNumber (string or empty), expiryDate (YYYY-MM-DD or empty). Example output: [{\"name\": \"Basmati Rice\", \"quantity\": 10, \"unit\": \"bags\", \"costPrice\": 200, \"mrp\": 250, \"batchNumber\": \"BT-101\", \"expiryDate\": \"2027-01-01\"}]. Do not wrap in markdown or backticks."
-              },
-              {
-                inline_data: {
-                  mime_type: "image/jpeg",
-                  data: imageBase64.replace(/^data:image\/[a-z]+;base64,/, "")
-                }
+                parts: [
+                  {
+                    text: "Extract invoice or receipt items in strictly valid JSON format. Return an array of objects with keys: name (string), quantity (number), unit (string e.g. bags, bottles, strips, packs), costPrice (number), mrp (number), batchNumber (string or empty), expiryDate (YYYY-MM-DD or empty). Example output: [{\"name\": \"Basmati Rice\", \"quantity\": 10, \"unit\": \"bags\", \"costPrice\": 200, \"mrp\": 250, \"batchNumber\": \"BT-101\", \"expiryDate\": \"2027-01-01\"}]. Return ONLY the JSON array."
+                  },
+                  {
+                    inline_data: {
+                      mime_type: "image/jpeg",
+                      data: imageBase64.replace(/^data:image\/[a-z]+;base64,/, "")
+                    }
+                  }
+                ]
               }
             ]
+          };
+
+          const response = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const match = rawText.match(/\[[\s\S]*\]/);
+            if (match) {
+              parsedItems = JSON.parse(match[0]);
+              activeModel = `Google Gemini (${model.replace('models/', '')})`;
+              break;
+            }
           }
-        ]
-      };
+        } catch (innerErr) {
+          console.warn(`Model ${model} attempt failed:`, innerErr.message);
+        }
+      }
 
-      const response = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-      const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const cleanJson = rawText.replace(/```json|```/g, '').trim();
-      const parsedItems = JSON.parse(cleanJson);
-
-      return res.json({ success: true, provider: 'Google Gemini 1.5 Flash', items: parsedItems });
+      if (parsedItems && Array.isArray(parsedItems) && parsedItems.length > 0) {
+        return res.json({ success: true, provider: activeModel, items: parsedItems });
+      }
     } catch (err) {
       console.warn('Gemini live call error, falling back to intelligent OCR simulator:', err.message);
     }

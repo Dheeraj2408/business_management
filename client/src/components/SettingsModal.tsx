@@ -35,7 +35,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
   const [activeTab, setActiveTab] = useState<'api_payments' | 'firebase'>('api_payments');
 
   // AI & Payments
-  const [geminiKey, setGeminiKey] = useState(localStorage.getItem('operix_gemini_key') || '');
+  const [geminiKey, setGeminiKey] = useState(
+    localStorage.getItem('operix_gemini_key') ||
+    (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+    ''
+  );
   const [upiId, setUpiId] = useState(localStorage.getItem('operix_upi_id') || 'operix@upi');
   const [serverStatus, setServerStatus] = useState<boolean | null>(null);
 
